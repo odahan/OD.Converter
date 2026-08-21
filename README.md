@@ -4,8 +4,13 @@ Self-contained Windows x64 executable with embedded FFmpeg 8.1.2. No external de
 
 ## Installation
 
-1. Get `publish/odconv.exe` (~265 MB self-contained)
-2. Optional: add to PATH or associate `.wav/.mp3` → `odconv "%1"`
+**For immediate use on Windows x64, just download `odconv.exe` from [Releases](https://github.com/odahan/OD.Converter/releases) — no build required, no dependencies.**
+
+1. Go to **Releases** → download `odconv.exe` (~265 MB, self-contained, FFmpeg embedded)
+2. Run it directly: double-click or `odconv.exe --help`
+3. Optional: add to PATH or associate `.wav/.mp3` → `odconv "%1"`
+
+> Building from source is only needed for development. See [Build](#build) below. `publish/odconv.exe` is the same binary as in Releases.
 
 ## Usage
 
