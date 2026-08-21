@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OD.Converter/OD.Converter.csproj" />
+  </Folder>
+</Solution>

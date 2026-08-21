@@ -1,0 +1,19 @@
+# Build
+bin/
+obj/
+publish/
+out/
+
+# User files
+.vs/
+*.user
+*.suo
+*.rsuser
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+*.log

@@ -1,0 +1,2 @@
+src/OD.Converter/tools/ffmpeg.exe filter=lfs diff=lfs merge=lfs -text
+src/OD.Converter/tools/ffprobe.exe filter=lfs diff=lfs merge=lfs -text
