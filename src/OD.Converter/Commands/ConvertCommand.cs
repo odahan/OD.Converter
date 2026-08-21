@@ -4,221 +4,157 @@ using Spectre.Console;
 
 namespace OD.Converter.Commands;
 
+/// <summary>Handles the non-interactive audio conversion command.</summary>
 public static class ConvertCommand
 {
+    /// <summary>Parses conversion arguments and runs FFmpeg.</summary>
     public static async Task<int> RunAsync(string[] args, CancellationToken ct)
     {
-        // args after "convert": [input] [options]
-        string? input = null;
-        string? to = null;
-        string? output = null;
-        string? bitrate = null;
-        int? quality = null;
-        int? sr = null;
-        int? ch = null;
-        bool mono = false;
-        int? bitDepth = null;
-        int? comp = null;
-        string overwrite = "never";
-        string? ffmpegOverride = null;
-        bool dryRun = false;
-
-        var positional = new List<string>();
-
-        for (int i = 0; i < args.Length; i++)
-        {
-            var a = args[i];
-            switch (a)
-            {
-                case "--to": case "-t": to = Next(args, ref i, "--to"); break;
-                case "--output": case "-o": output = Next(args, ref i, "--output"); break;
-                case "--bitrate": case "-b": bitrate = Next(args, ref i, "--bitrate"); break;
-                case "--quality": case "-q": quality = int.Parse(Next(args, ref i, "--quality")); break;
-                case "--sample-rate": sr = int.Parse(Next(args, ref i, "--sample-rate")); break;
-                case "--channels": ch = int.Parse(Next(args, ref i, "--channels")); break;
-                case "--mono": mono = true; break;
-                case "--bit-depth": bitDepth = int.Parse(Next(args, ref i, "--bit-depth")); break;
-                case "--compression": comp = int.Parse(Next(args, ref i, "--compression")); break;
-                case "--overwrite": overwrite = Next(args, ref i, "--overwrite"); break;
-                case "--ffmpeg": ffmpegOverride = Next(args, ref i, "--ffmpeg"); break;
-                case "--dry-run": dryRun = true; break;
-                case "--help": case "-h": case "-?": PrintHelp(); return 0;
-                default:
-                    if (a.StartsWith("-"))
-                    {
-                        ErrorHandler.Fail($"option inconnue : \"{a}\". Utilisez --help");
-                        return 1;
-                    }
-                    positional.Add(a);
-                    break;
-            }
-        }
-
-        if (positional.Count > 0) input = positional[0];
-        if (positional.Count > 1)
-        {
-            ErrorHandler.Fail($"trop d'arguments positionnels : \"{string.Join(" ", positional.Skip(1))}\"");
-            return 1;
-        }
-
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            ErrorHandler.Fail("fichier source manquant. Usage : odconv convert <fichier> --to <format> [-o sortie]");
-            return 1;
-        }
-        if (string.IsNullOrWhiteSpace(to))
-        {
-            ErrorHandler.Fail("format cible manquant. Utilisez --to <format> (ex: --to mp3). Formats : " + FormatRegistry.SupportedList);
-            return 1;
-        }
-
-        input = input.Trim().Trim('"');
-        to = to.Trim().TrimStart('.').ToLowerInvariant();
-        if (!string.IsNullOrWhiteSpace(output)) output = output.Trim().Trim('"');
-
-        if (!File.Exists(input))
-        {
-            ErrorHandler.Fail($"fichier introuvable : \"{input}\"");
-            return 1;
-        }
-        var fmt = FormatRegistry.Get(to);
-        if (fmt is null)
-        {
-            ErrorHandler.Fail($"format non supporté : \"{to}\". Formats : {FormatRegistry.SupportedList}");
-            return 1;
-        }
-        if (overwrite != "never" && overwrite != "always")
-        {
-            ErrorHandler.Fail($"valeur --overwrite invalide : \"{overwrite}\" (attendu: never|always)");
-            return 1;
-        }
-        if (ch.HasValue && ch != 1 && ch != 2 && ch != 6)
-        {
-            ErrorHandler.Fail($"--channels invalide : {ch} (attendu 1, 2 ou 6)");
-            return 1;
-        }
-        if (mono && ch.HasValue && ch != 1)
-        {
-            AnsiConsole.MarkupLine("[yellow]Avertissement :[/] --mono prioritaire sur --channels, sortie mono.");
-        }
-
-        if (string.IsNullOrWhiteSpace(output))
-            output = mono ? FormatRegistry.DefaultOutputPathMono(input, to) : FormatRegistry.DefaultOutputPath(input, to);
-        else if (string.IsNullOrWhiteSpace(Path.GetExtension(output)))
-            output += fmt.Extension;
-
-        if (File.Exists(output) && overwrite == "never" && !dryRun)
-        {
-            ErrorHandler.Fail($"le fichier de sortie existe déjà : \"{output}\". Utilisez --overwrite always ou choisissez un autre nom.");
-            return 1;
-        }
-
-        var outDir = Path.GetDirectoryName(Path.GetFullPath(output));
-        if (!string.IsNullOrEmpty(outDir) && !Directory.Exists(outDir))
-        {
-            try { Directory.CreateDirectory(outDir); }
-            catch (Exception ex)
-            {
-                ErrorHandler.Fail($"impossible de créer le dossier de sortie \"{outDir}\" : {ex.Message}");
-                return 1;
-            }
-        }
-
-        string ffmpeg;
-        try { ffmpeg = FfmpegLocator.Resolve(ffmpegOverride); }
-        catch (Exception ex) { ErrorHandler.Fail(ex.Message); return 2; }
-
-        var opts = new ConversionOptions
-        {
-            InputPath = input,
-            OutputPath = output,
-            TargetFormat = to,
-            Bitrate = bitrate,
-            Quality = quality,
-            SampleRate = sr,
-            Channels = ch,
-            Mono = mono,
-            BitDepth = bitDepth,
-            CompressionLevel = comp,
-            Overwrite = overwrite,
-            FfmpegPath = ffmpegOverride,
-            DryRun = dryRun,
-        };
-
-        List<string> ffArgs;
-        try { ffArgs = FfmpegConverter.BuildArguments(opts); }
-        catch (Exception ex) { ErrorHandler.Fail(ex.Message); return 1; }
-
-        var cmdLine = FfmpegConverter.BuildCommandLine(ffmpeg, ffArgs);
-        if (dryRun)
-        {
-            AnsiConsole.MarkupLine("[grey]Dry-run :[/]");
-            Console.WriteLine(cmdLine);
-            return 0;
-        }
-
-        AnsiConsole.MarkupLine($"[grey]Conversion :[/] {Markup.Escape(Path.GetFileName(input))} → {Markup.Escape(Path.GetFileName(output))} [[{fmt.Key}]]");
-
         try
         {
-            var (code, stderr) = await FfmpegConverter.RunWithOutputAsync(ffmpeg, ffArgs, ct);
-            if (code == 0)
+            var parsed = ParseArguments(args);
+            if (parsed.ShowHelp) { PrintHelp(); return 0; }
+            if (parsed.Positional.Count == 0)
+                return ErrorHandler.Fail("Source file is required. Usage: odconv convert <file> --to <format> [-o output]");
+            if (parsed.Positional.Count > 1)
+                return ErrorHandler.Fail($"Too many positional arguments: \"{string.Join(" ", parsed.Positional.Skip(1))}\".");
+            if (string.IsNullOrWhiteSpace(parsed.TargetFormat))
+                return ErrorHandler.Fail("Target format is required. Use --to <format>, for example --to mp3.");
+
+            var input = parsed.Positional[0].Trim().Trim('"');
+            var targetFormat = parsed.TargetFormat.Trim().TrimStart('.').ToLowerInvariant();
+            var format = FormatRegistry.Get(targetFormat);
+            if (!File.Exists(input)) return ErrorHandler.Fail($"Source file not found: \"{input}\".");
+            if (format is null) return ErrorHandler.Fail($"Unsupported format: \"{targetFormat}\". Formats: {FormatRegistry.SupportedList}");
+
+            var output = string.IsNullOrWhiteSpace(parsed.OutputPath)
+                ? parsed.Mono ? FormatRegistry.DefaultOutputPathMono(input, targetFormat) : FormatRegistry.DefaultOutputPath(input, targetFormat)
+                : parsed.OutputPath.Trim().Trim('"');
+            if (string.IsNullOrWhiteSpace(Path.GetExtension(output))) output += format.Extension;
+
+            var options = new ConversionOptions
             {
-                if (!File.Exists(output))
-                {
-                    ErrorHandler.Fail($"conversion terminée mais fichier de sortie introuvable : \"{output}\"");
-                    return 3;
-                }
-                var fi = new FileInfo(output);
-                AnsiConsole.MarkupLine($"[green]OK[/] {Markup.Escape(output)} ({fi.Length / 1024} Ko)");
+                InputPath = input, OutputPath = output, TargetFormat = targetFormat, Bitrate = parsed.Bitrate,
+                Quality = parsed.Quality, SampleRate = parsed.SampleRate, Channels = parsed.Channels, Mono = parsed.Mono,
+                BitDepth = parsed.BitDepth, CompressionLevel = parsed.CompressionLevel, Overwrite = parsed.Overwrite,
+                FfmpegPath = parsed.FfmpegPath, DryRun = parsed.DryRun,
+            };
+
+            ConversionOptionsValidator.Validate(options);
+            ConversionOptionsValidator.EnsureDifferentPaths(input, output);
+            if (File.Exists(output) && options.Overwrite == "never" && !options.DryRun)
+                return ErrorHandler.Fail($"Output file already exists: \"{output}\". Use --overwrite always or choose another name.");
+
+            if (!options.DryRun)
+            {
+                var outputDirectory = Path.GetDirectoryName(Path.GetFullPath(output));
+                if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory)) Directory.CreateDirectory(outputDirectory);
+            }
+
+            string ffmpeg;
+            try { ffmpeg = FfmpegLocator.Resolve(parsed.FfmpegPath); }
+            catch (Exception ex) { return ErrorHandler.Fail(ex.Message, 2); }
+
+            var ffmpegArguments = FfmpegConverter.BuildArguments(options);
+            if (options.DryRun)
+            {
+                AnsiConsole.MarkupLine("[grey]Dry run:[/]");
+                Console.WriteLine(FfmpegConverter.BuildCommandLine(ffmpeg, ffmpegArguments));
                 return 0;
             }
-            else
+
+            AnsiConsole.MarkupLine($"[grey]Converting:[/] {Markup.Escape(Path.GetFileName(input))} → {Markup.Escape(Path.GetFileName(output))} [[{format.Key}]]");
+            var (exitCode, standardError) = await FfmpegConverter.RunWithOutputAsync(ffmpeg, ffmpegArguments, ct);
+            if (exitCode == 0)
             {
-                var last = stderr.Split('\n', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim() ?? "";
-                if (last.Length > 300) last = last[..300];
-                var detail = string.IsNullOrWhiteSpace(last) ? $"ffmpeg code {code}" : last;
-                ErrorHandler.Fail($"conversion échouée ({detail}). Vérifiez le fichier source ou essayez un autre format.");
-                try { if (File.Exists(output) && new FileInfo(output).Length == 0) File.Delete(output); } catch { }
-                return 3;
+                if (!File.Exists(output)) return ErrorHandler.Fail($"Conversion completed but output file was not found: \"{output}\".", 3);
+                var fileInfo = new FileInfo(output);
+                AnsiConsole.MarkupLine($"[green]OK[/] {Markup.Escape(output)} ({fileInfo.Length / 1024} KB)");
+                return 0;
             }
+
+            var detail = standardError.Split('\n', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim() ?? $"FFmpeg exited with code {exitCode}";
+            return ErrorHandler.Fail($"Conversion failed ({detail[..Math.Min(detail.Length, 300)]}). Check the source file or try another format.", 3);
         }
-        catch (OperationCanceledException)
-        {
-            AnsiConsole.MarkupLine("[yellow]Conversion annulée.[/]");
-            return 130;
-        }
-        catch (Exception ex)
-        {
-            ErrorHandler.Fail($"erreur inattendue : {ex.Message}");
-            return 3;
-        }
+        catch (OperationCanceledException) { AnsiConsole.MarkupLine("[yellow]Conversion cancelled.[/]"); return 130; }
+        catch (ArgumentException ex) { return ErrorHandler.Fail(ex.Message); }
+        catch (Exception ex) { return ErrorHandler.Fail($"Unexpected error: {ex.Message}", 3); }
     }
 
-    private static string Next(string[] args, ref int i, string name)
-    {
-        if (i + 1 >= args.Length) throw new ArgumentException($"valeur manquante pour {name}");
-        return args[++i];
-    }
-
+    /// <summary>Prints help for the conversion command.</summary>
     public static void PrintHelp()
     {
-        AnsiConsole.WriteLine("Usage: odconv convert <fichier> --to <format> [options]");
-        AnsiConsole.WriteLine("");
-        AnsiConsole.WriteLine("Formats : " + FormatRegistry.SupportedList);
-        AnsiConsole.WriteLine("");
-        AnsiConsole.WriteLine("Options :");
-        AnsiConsole.WriteLine("  -t, --to <fmt>        Format cible (requis)");
-        AnsiConsole.WriteLine("  -o, --output <f>      Fichier sortie (défaut: même nom + ext)");
-        AnsiConsole.WriteLine("  -b, --bitrate <k>     Bitrate ex: 320k, 192k (lossy)");
-        AnsiConsole.WriteLine("  -q, --quality <n>     Qualité VBR (mp3 0-9, ogg 0-10)");
-        AnsiConsole.WriteLine("      --sample-rate <n> 44100, 48000...");
-        AnsiConsole.WriteLine("      --channels <n>    1, 2, 6");
-        AnsiConsole.WriteLine("      --mono            Forcer mono (1 canal)");
-        AnsiConsole.WriteLine("      --bit-depth <n>   16,24,32 (wav/aiff)");
-        AnsiConsole.WriteLine("      --compression <n> 0-8 (flac)");
-        AnsiConsole.WriteLine("      --overwrite <v>   never|always (défaut never)");
-        AnsiConsole.WriteLine("      --ffmpeg <path>   Chemin ffmpeg.exe");
-        AnsiConsole.WriteLine("      --dry-run         Afficher commande sans exécuter");
+        AnsiConsole.WriteLine("Usage: odconv convert <file> --to <format> [options]");
+        AnsiConsole.WriteLine("\nFormats: " + FormatRegistry.SupportedList + "\n\nOptions:");
+        AnsiConsole.WriteLine("  -t, --to <format>     Target format (required)");
+        AnsiConsole.WriteLine("  -o, --output <file>   Output file (default: source name + extension)");
+        AnsiConsole.WriteLine("  -b, --bitrate <rate>  Bitrate, for example 320k or 192k");
+        AnsiConsole.WriteLine("  -q, --quality <n>     VBR quality: MP3 0-9, Ogg 0-10");
+        AnsiConsole.WriteLine("      --sample-rate <n> 22050, 44100, 48000, or 96000");
+        AnsiConsole.WriteLine("      --channels <n>    1, 2, or 6");
+        AnsiConsole.WriteLine("      --mono            Force mono output");
+        AnsiConsole.WriteLine("      --bit-depth <n>   16, 24, or 32 for WAV/AIFF");
+        AnsiConsole.WriteLine("      --compression <n> 0-8 for FLAC");
+        AnsiConsole.WriteLine("      --overwrite <v>   never or always (default: never)");
+        AnsiConsole.WriteLine("      --ffmpeg <path>   Path to ffmpeg.exe or its directory");
+        AnsiConsole.WriteLine("      --dry-run         Print the command without running it");
+    }
+
+    private static ParsedArguments ParseArguments(string[] args)
+    {
+        var parsed = new ParsedArguments();
+        for (var index = 0; index < args.Length; index++)
+        {
+            switch (args[index])
+            {
+                case "--to" or "-t": parsed.TargetFormat = Next(args, ref index, "--to"); break;
+                case "--output" or "-o": parsed.OutputPath = Next(args, ref index, "--output"); break;
+                case "--bitrate" or "-b": parsed.Bitrate = Next(args, ref index, "--bitrate"); break;
+                case "--quality" or "-q": parsed.Quality = NextInteger(args, ref index, "--quality"); break;
+                case "--sample-rate": parsed.SampleRate = NextInteger(args, ref index, "--sample-rate"); break;
+                case "--channels": parsed.Channels = NextInteger(args, ref index, "--channels"); break;
+                case "--mono": parsed.Mono = true; break;
+                case "--bit-depth": parsed.BitDepth = NextInteger(args, ref index, "--bit-depth"); break;
+                case "--compression": parsed.CompressionLevel = NextInteger(args, ref index, "--compression"); break;
+                case "--overwrite": parsed.Overwrite = Next(args, ref index, "--overwrite"); break;
+                case "--ffmpeg": parsed.FfmpegPath = Next(args, ref index, "--ffmpeg"); break;
+                case "--dry-run": parsed.DryRun = true; break;
+                case "--help" or "-h" or "-?": parsed.ShowHelp = true; break;
+                case var value when value.StartsWith('-'): throw new ArgumentException($"Unknown option: \"{value}\". Use --help.");
+                default: parsed.Positional.Add(args[index]); break;
+            }
+        }
+        return parsed;
+    }
+
+    private static string Next(string[] args, ref int index, string option)
+    {
+        if (++index >= args.Length) throw new ArgumentException($"Missing value for {option}.");
+        return args[index];
+    }
+
+    private static int NextInteger(string[] args, ref int index, string option)
+    {
+        var value = Next(args, ref index, option);
+        if (!int.TryParse(value, out var result)) throw new ArgumentException($"Invalid value for {option}: \"{value}\". An integer is required.");
+        return result;
+    }
+
+    private sealed class ParsedArguments
+    {
+        public List<string> Positional { get; } = [];
+        public string? TargetFormat { get; set; }
+        public string? OutputPath { get; set; }
+        public string? Bitrate { get; set; }
+        public int? Quality { get; set; }
+        public int? SampleRate { get; set; }
+        public int? Channels { get; set; }
+        public bool Mono { get; set; }
+        public int? BitDepth { get; set; }
+        public int? CompressionLevel { get; set; }
+        public string Overwrite { get; set; } = "never";
+        public string? FfmpegPath { get; set; }
+        public bool DryRun { get; set; }
+        public bool ShowHelp { get; set; }
     }
 }

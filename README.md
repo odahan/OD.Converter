@@ -72,7 +72,7 @@ Error: conversion failed (Invalid data found...). Check source file...
 ## Build
 
 ```powershell
-dotnet build src/OD.Converter -c Release -r win-x64
+dotnet build src/OD.Converter -c Release -r win-x64 -m:1
 dotnet publish src/OD.Converter -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true -o publish
 .\publish\odconv.exe --help
 ```

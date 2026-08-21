@@ -10,7 +10,7 @@ if (rawArgs.Length == 0 || ShouldRunInteractive(rawArgs))
 
     if (initialInput != null && !File.Exists(initialInput) && !initialInput.StartsWith('-'))
     {
-        AnsiConsole.MarkupLine($"[red]Erreur :[/] fichier introuvable : \"{Markup.Escape(initialInput)}\"");
+        AnsiConsole.MarkupLine($"[red]Error:[/] Source file not found: \"{Markup.Escape(initialInput)}\"");
         return 1;
     }
 
@@ -45,10 +45,10 @@ switch (cmd)
     case "--help": case "-h": case "-?": case "help":
         PrintRootHelp(); exit = 0; break;
     case "--version": case "-v": case "version":
-        Console.WriteLine("odconv 1.0.0 (.NET 10 win-x64, ffmpeg 8.1.2)");
+        Console.WriteLine($"odconv {ApplicationInfo.Version} (.NET 10 win-x64, FFmpeg 8.1.2)");
         exit = 0; break;
     default:
-        AnsiConsole.MarkupLine($"[red]Erreur :[/] commande inconnue : \"{Markup.Escape(cmd)}\"");
+        AnsiConsole.MarkupLine($"[red]Error:[/] Unknown command: \"{Markup.Escape(cmd)}\"");
         PrintRootHelp();
         exit = 1;
         break;
@@ -63,7 +63,7 @@ static bool ShouldRunInteractive(string[] a)
         var p = a[0].Trim().Trim('"');
         if (File.Exists(p)) return true;
         if (!p.StartsWith('-') && !IsSubcommand(p) && (p.Contains('.') || p.Contains('\\') || p.Contains('/')))
-            return true; // will show error if not found but still interactive path
+            return true;
     }
     return false;
 }
@@ -73,13 +73,13 @@ static bool IsSubcommand(string s) =>
 
 static void PrintRootHelp()
 {
-    AnsiConsole.WriteLine("odconv — convertisseur audio");
+    AnsiConsole.WriteLine("odconv — audio converter");
     AnsiConsole.WriteLine("");
     AnsiConsole.WriteLine("Usage :");
-    AnsiConsole.WriteLine("  odconv <fichier>                 Ouvrir le menu interactif");
-    AnsiConsole.WriteLine("  odconv convert <f> --to <fmt>    Conversion en ligne de commande");
-    AnsiConsole.WriteLine("  odconv probe <f> [--json]        Infos fichier");
-    AnsiConsole.WriteLine("  odconv formats                   Lister formats supportés");
+    AnsiConsole.WriteLine("  odconv <file>                    Open the interactive menu");
+    AnsiConsole.WriteLine("  odconv convert <f> --to <fmt>    Convert from the command line");
+    AnsiConsole.WriteLine("  odconv probe <f> [--json]        Show file metadata");
+    AnsiConsole.WriteLine("  odconv formats                   List supported formats");
     AnsiConsole.WriteLine("");
     AnsiConsole.WriteLine("Exemples :");
     AnsiConsole.WriteLine("  odconv song.wav                  # menu interactif");
@@ -88,5 +88,5 @@ static void PrintRootHelp()
     AnsiConsole.WriteLine("  odconv convert in.wav --to flac --compression 5");
     AnsiConsole.WriteLine("  odconv probe track.mp3 --json");
     AnsiConsole.WriteLine("");
-    AnsiConsole.WriteLine("Formats : wav, flac, mp3, ogg, opus, aac, m4a, aiff, wma, wv, alac");
+    AnsiConsole.WriteLine("Formats: wav, flac, mp3, ogg, opus, aac, m4a, aiff, wma, wv, alac");
 }

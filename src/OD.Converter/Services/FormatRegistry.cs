@@ -1,5 +1,8 @@
 namespace OD.Converter.Services;
 
+/// <summary>
+/// Describes an output audio format supported by FFmpeg.
+/// </summary>
 public sealed record FormatInfo(
     string Key,
     string Extension,
@@ -10,6 +13,9 @@ public sealed record FormatInfo(
     string Description,
     string FfmpegArgs);
 
+/// <summary>
+/// Provides the supported output formats and their aliases.
+/// </summary>
 public static class FormatRegistry
 {
     private static readonly Dictionary<string, FormatInfo> _formats = new(StringComparer.OrdinalIgnoreCase)
@@ -27,13 +33,18 @@ public static class FormatRegistry
         ["alac"] = new("alac", ".m4a",  "mp4",  "alac",       true,  "",     "ALAC (Apple Lossless)", "-c:a alac"),
     };
 
-    // aliases
+    /// <summary>
+    /// Maps accepted aliases to their canonical format keys.
+    /// </summary>
     private static readonly Dictionary<string, string> _aliases = new(StringComparer.OrdinalIgnoreCase)
     {
         ["mp4"] = "m4a",
         ["m4b"] = "m4a",
     };
 
+    /// <summary>
+    /// Gets the format associated with a key or alias.
+    /// </summary>
     public static FormatInfo? Get(string key)
     {
         if (key.StartsWith('.')) key = key[1..];
@@ -41,12 +52,24 @@ public static class FormatRegistry
         return _formats.TryGetValue(key, out var f) ? f : null;
     }
 
+    /// <summary>
+    /// Determines whether a format key or alias is supported.
+    /// </summary>
     public static bool IsSupported(string key) => Get(key) is not null;
 
+    /// <summary>
+    /// Gets all supported formats ordered by key.
+    /// </summary>
     public static IEnumerable<FormatInfo> All => _formats.Values.OrderBy(f => f.Key);
 
+    /// <summary>
+    /// Gets the comma-separated list of canonical format keys.
+    /// </summary>
     public static string SupportedList => string.Join(", ", All.Select(f => f.Key));
 
+    /// <summary>
+    /// Creates the default output path for a target format.
+    /// </summary>
     public static string DefaultOutputPath(string inputPath, string targetFormat)
     {
         var fmt = Get(targetFormat);
@@ -56,13 +79,15 @@ public static class FormatRegistry
         return Path.Combine(dir, $"{name}{ext}");
     }
 
+    /// <summary>
+    /// Creates the default output path for a mono conversion.
+    /// </summary>
     public static string DefaultOutputPathMono(string inputPath, string targetFormat)
     {
         var fmt = Get(targetFormat);
         var ext = fmt?.Extension ?? "." + targetFormat.TrimStart('.');
         var dir = Path.GetDirectoryName(inputPath) ?? ".";
         var name = Path.GetFileNameWithoutExtension(inputPath);
-        // avoid double -mono
         if (name.EndsWith("-mono", StringComparison.OrdinalIgnoreCase))
             return Path.Combine(dir, $"{name}{ext}");
         return Path.Combine(dir, $"{name}-mono{ext}");

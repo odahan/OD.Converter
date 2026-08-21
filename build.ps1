@@ -4,7 +4,7 @@ param(
 )
 $ErrorActionPreference = "Stop"
 Write-Host "Build odconv $Configuration win-x64..." -ForegroundColor Cyan
-dotnet build src/OD.Converter -c $Configuration -r win-x64
+dotnet build src/OD.Converter -c $Configuration -r win-x64 -m:1
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "Publish self-contained..." -ForegroundColor Cyan
 dotnet publish src/OD.Converter -c $Configuration -r win-x64 --self-contained true /p:PublishSingleFile=true -o $Output
