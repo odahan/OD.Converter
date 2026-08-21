@@ -1,24 +1,24 @@
-# odconv — Convertisseur audio CLI (.NET 10 win-x64)
+# odconv — Audio Converter CLI (.NET 10 win-x64)
 
-Exe autonome Windows x64, FFmpeg 8.1.2 embarqué. Pas de dépendance externe.
+Self-contained Windows x64 executable with embedded FFmpeg 8.1.2. No external dependencies.
 
 ## Installation
 
-1. Récupérer `publish/odconv.exe` (~265 Mo self-contained)
-2. Optionnel : ajouter au PATH ou associer `.wav/.mp3` → `odconv "%1"`
+1. Get `publish/odconv.exe` (~265 MB self-contained)
+2. Optional: add to PATH or associate `.wav/.mp3` → `odconv "%1"`
 
 ## Usage
 
-### Menu interactif
+### Interactive menu
 
 ```powershell
-odconv song.wav          # menu : format, bitrate, mono, sortie
-odconv                   # demande le fichier source
+odconv song.wav          # menu: format, bitrate, mono, output
+odconv                   # prompts for source file
 ```
 
-Menu : choix format (mp3/wav/flac/ogg/opus/aac/m4a/aiff/wma/wv/alac) → bitrate/qualité/compression → mono → fréquence → fichier sortie → confirmation → conversion → boucle "autre fichier ?"
+Menu flow: format selection (mp3/wav/flac/ogg/opus/aac/m4a/aiff/wma/wv/alac) → bitrate / quality / compression → mono → sample rate → output file → confirm → convert → loop "another file?"
 
-### Ligne de commande
+### Command line
 
 ```powershell
 odconv convert input.wav --to mp3 --bitrate 320k -o out.mp3
@@ -34,34 +34,34 @@ odconv --help
 odconv --version
 ```
 
-### Options `convert`
+### `convert` options
 
-| Option | Description | Défaut |
-|--------|-------------|--------|
-| `--to, -t` | Format cible (requis) : `wav, flac, mp3, ogg, opus, aac, m4a, aiff, wma, wv, alac` | - |
-| `-o, --output` | Fichier sortie | `<nom>.<ext>` à côté source, ou `<nom>-mono.<ext>` si `--mono` |
-| `-b, --bitrate` | Bitrate ex `320k, 192k, 128k` (lossy) | mp3 `320k`, ogg `192k`→q6, opus `128k`, aac/m4a/wma `192k` |
-| `-q, --quality` | Qualité VBR : mp3 `0-9` (0 max), ogg `0-10` | mp3 CBR si absent, ogg `6` |
-| `--sample-rate` | `44100, 48000, 22050, 96000` | conserve source |
-| `--channels` | `1,2,6` | conserve source |
-| `--mono` | Force mono `-ac 1` (prioritaire) | `false` |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--to, -t` | Target format (required): `wav, flac, mp3, ogg, opus, aac, m4a, aiff, wma, wv, alac` | - |
+| `-o, --output` | Output file | `<name>.<ext>` next to source, or `<name>-mono.<ext>` with `--mono` |
+| `-b, --bitrate` | Bitrate e.g. `320k, 192k, 128k` (lossy) | mp3 `320k`, ogg `192k`→q6, opus `128k`, aac/m4a/wma `192k` |
+| `-q, --quality` | VBR quality: mp3 `0-9` (0 best), ogg `0-10` | mp3 CBR if omitted, ogg `6` |
+| `--sample-rate` | `44100, 48000, 22050, 96000` | keep source |
+| `--channels` | `1,2,6` | keep source |
+| `--mono` | Force mono `-ac 1` (takes precedence) | `false` |
 | `--bit-depth` | `16,24,32` (wav/aiff) | `16` |
 | `--compression` | `0-8` (flac) | `5` |
-| `--overwrite` | `never|always` | `never` (erreur si existe) |
-| `--ffmpeg` | Chemin `ffmpeg.exe` custom | auto : `tools/ffmpeg.exe` embarqué → `C:\ffmpeg\bin` → `PATH` |
-| `--dry-run` | Affiche commande ffmpeg | `false` |
+| `--overwrite` | `never|always` | `never` (error if exists) |
+| `--ffmpeg` | Custom `ffmpeg.exe` path | auto: embedded `tools/ffmpeg.exe` → `C:\ffmpeg\bin` → `PATH` |
+| `--dry-run` | Print ffmpeg command without running | `false` |
 
-### Codes retour
+### Exit codes
 
-`0 OK`, `1 args/fichier`, `2 ffmpeg introuvable`, `3 échec conversion`, `130 annulé Ctrl+C`
+`0 OK`, `1 args/file`, `2 ffmpeg not found`, `3 conversion failed`, `130 cancelled Ctrl+C`
 
-### Messages d'erreur (sans log)
+### Error messages (no logs)
 
 ```
-Erreur : fichier introuvable : "C:\...\in.wav"
-Erreur : format non supporté : "xyz". Formats : aac, aiff, ...
-Erreur : le fichier de sortie existe déjà : "out.mp3". Utilisez --overwrite always
-Erreur : conversion échouée (Invalid data found...). Vérifiez le fichier source...
+Error: file not found: "C:\...\in.wav"
+Error: unsupported format: "xyz". Formats: aac, aiff, ...
+Error: output file already exists: "out.mp3". Use --overwrite always
+Error: conversion failed (Invalid data found...). Check source file...
 ```
 
 ## Build
@@ -72,11 +72,11 @@ dotnet publish src/OD.Converter -c Release -r win-x64 --self-contained true /p:P
 .\publish\odconv.exe --help
 ```
 
-Prérequis : .NET SDK 10.0.400, Spectre.Console 0.49.1
+Prerequisites: .NET SDK 10.0.400, Spectre.Console 0.49.1
 
-## FFmpeg embarqué
+## Embedded FFmpeg
 
-`tools/ffmpeg.exe` + `ffprobe.exe` (essentials_build-www.gyan.dev, gcc 16.1, GPL v3) copiés depuis `C:\ffmpeg`. `tools/LICENSE` inclus. Publish SingleFile extrait vers dossier temp via `IncludeAllContentForSelfExtract`.
+`tools/ffmpeg.exe` + `ffprobe.exe` (essentials_build-www.gyan.dev, gcc 16.1, GPL v3) copied from `C:\ffmpeg`. `tools/LICENSE` included. SingleFile publish extracts to temp folder via `IncludeAllContentForSelfExtract`.
 
 ## Structure
 
@@ -84,7 +84,7 @@ Prérequis : .NET SDK 10.0.400, Spectre.Console 0.49.1
 src/OD.Converter/
   OD.Converter.csproj (AssemblyName odconv, SelfContained, SingleFile)
   tools/ffmpeg.exe, ffprobe.exe, LICENSE
-  Program.cs (dispatch + mode interactif)
+  Program.cs (dispatch + interactive mode)
   Commands/ConvertCommand, ProbeCommand, FormatsCommand
   Services/FormatRegistry, FfmpegConverter, FfprobeService, FfmpegLocator, InteractiveConverter, ErrorHandler
   Models/ConversionOptions
