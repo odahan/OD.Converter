@@ -79,6 +79,12 @@ dotnet publish src/OD.Converter -c Release -r win-x64 --self-contained true /p:P
 
 Prerequisites: .NET SDK 10.0.400, Spectre.Console 0.49.1
 
+### Tests
+
+```powershell
+dotnet test OD.Converter.slnx -c Release -m:1
+```
+
 ## Embedded FFmpeg
 
 `tools/ffmpeg.exe` + `ffprobe.exe` (essentials_build-www.gyan.dev, gcc 16.1, GPL v3) copied from `C:\ffmpeg`. `tools/LICENSE` included. SingleFile publish extracts to temp folder via `IncludeAllContentForSelfExtract`.
