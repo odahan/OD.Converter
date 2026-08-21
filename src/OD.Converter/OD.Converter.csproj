@@ -6,6 +6,10 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AssemblyName>odconv</AssemblyName>
     <Product>OD.Converter</Product>
+    <Copyright>© 2026 Olivier Dahan</Copyright>
+    <RepositoryUrl>https://github.com/odahan/OD.Converter</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/odahan/OD.Converter</PackageProjectUrl>
     <Version>1.2.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

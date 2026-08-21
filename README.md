@@ -2,6 +2,15 @@
 
 Self-contained Windows x64 executable with embedded FFmpeg 8.1.2. No external dependencies.
 
+## License and support
+
+Copyright © 2026 Olivier Dahan. OD.Converter is distributed under the [DonationWare License](LICENSE.md): it is free to use and share, and voluntary support is welcome.
+
+- Support the project: [Buy Me a Coffee](https://buymeacoffee.com/knhsynths)
+- Source code: [github.com/odahan/OD.Converter](https://github.com/odahan/OD.Converter)
+
+FFmpeg is a third-party component and remains subject to its own license, included in the distribution.
+
 ## Installation
 
 **For immediate use on Windows x64, just download `odconv.exe` from [Releases](https://github.com/odahan/OD.Converter/releases) — no build required, no dependencies.**
