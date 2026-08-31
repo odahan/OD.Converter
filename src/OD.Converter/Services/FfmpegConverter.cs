@@ -6,14 +6,18 @@ namespace OD.Converter.Services;
 /// <summary>
 /// Builds and executes FFmpeg conversion commands.
 /// </summary>
-public static class FfmpegConverter
+public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
 {
-    /// <summary>
-    /// Builds the FFmpeg argument list for validated conversion options.
-    /// </summary>
-    public static List<string> BuildArguments(ConversionOptions opts)
+    private readonly IConversionOptionsValidator _validator;
+
+    public FfmpegConverter(IConversionOptionsValidator validator)
     {
-        ConversionOptionsValidator.Validate(opts);
+        _validator = validator;
+    }
+
+    public List<string> BuildArguments(ConversionOptions opts)
+    {
+        _validator.Validate(opts);
         var fmt = FormatRegistry.Get(opts.TargetFormat)
             ?? throw new ArgumentException($"Unsupported format: {opts.TargetFormat}.");
 
@@ -112,19 +116,13 @@ public static class FfmpegConverter
         return args;
     }
 
-    /// <summary>
-    /// Builds a display-only command line with safely quoted arguments.
-    /// </summary>
     public static string BuildCommandLine(string ffmpegPath, IReadOnlyCollection<string> args)
     {
         string Quote(string s) => s.Contains(' ') || s.Contains('"') ? $"\"{s.Replace("\"", "\\\"")}\"" : s;
         return $"{Quote(ffmpegPath)} {string.Join(" ", args.Select(Quote))}";
     }
 
-    /// <summary>
-    /// Runs FFmpeg and returns its exit code and standard error output.
-    /// </summary>
-    public static async Task<(int ExitCode, string StandardError)> RunWithOutputAsync(string ffmpegPath, IReadOnlyCollection<string> args, CancellationToken ct)
+    public async Task<(int ExitCode, string StandardError)> RunAsync(string ffmpegPath, IReadOnlyCollection<string> args, CancellationToken ct)
     {
         var psi = new ProcessStartInfo(ffmpegPath)
         {

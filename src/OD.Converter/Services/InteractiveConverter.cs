@@ -4,10 +4,26 @@ using Spectre.Console;
 namespace OD.Converter.Services;
 
 /// <summary>Runs the guided interactive conversion workflow.</summary>
-public static class InteractiveConverter
+public class InteractiveConverter
 {
-    /// <summary>Runs the interactive conversion workflow.</summary>
-    public static async Task<int> RunAsync(string? initialInput, string? ffmpegOverride, CancellationToken ct)
+    private readonly IFfmpegLocator _ffmpegLocator;
+    private readonly IFfmpegRunner _ffmpegRunner;
+    private readonly IFfprobeService _ffprobeService;
+    private readonly IFileSystem _fileSystem;
+    private readonly IArgumentBuilder _argumentBuilder;
+    private readonly IConversionOptionsValidator _validator;
+
+    public InteractiveConverter(IFfmpegLocator ffmpegLocator, IFfmpegRunner ffmpegRunner, IFfprobeService ffprobeService, IFileSystem fileSystem, IArgumentBuilder argumentBuilder, IConversionOptionsValidator validator)
+    {
+        _ffmpegLocator = ffmpegLocator;
+        _ffmpegRunner = ffmpegRunner;
+        _ffprobeService = ffprobeService;
+        _fileSystem = fileSystem;
+        _argumentBuilder = argumentBuilder;
+        _validator = validator;
+    }
+
+    public async Task<int> RunAsync(string? initialInput, string? ffmpegOverride, CancellationToken ct)
     {
         while (true)
         {
@@ -25,7 +41,7 @@ public static class InteractiveConverter
                         {
                             if (string.IsNullOrWhiteSpace(p)) return ValidationResult.Success();
                             var t = p.Trim().Trim('"');
-                            return File.Exists(t) ? ValidationResult.Success() : ValidationResult.Error("File not found");
+                            return _fileSystem.FileExists(t) ? ValidationResult.Success() : ValidationResult.Error("File not found");
                         }));
                 inputPath = inputPath.Trim().Trim('"');
                 if (string.IsNullOrWhiteSpace(inputPath))
@@ -36,7 +52,7 @@ public static class InteractiveConverter
                 inputPath = inputPath.Trim().Trim('"');
             }
 
-            if (!File.Exists(inputPath))
+            if (!_fileSystem.FileExists(inputPath))
             {
                 ErrorHandler.FailInteractive($"Source file not found: \"{inputPath}\".");
                 initialInput = null;
@@ -46,15 +62,15 @@ public static class InteractiveConverter
             ProbeInfo? probe = null;
             try
             {
-                var ffprobe = FfmpegLocator.ResolveFfprobe(ffmpegOverride);
-                probe = await FfprobeService.TryProbeAsync(inputPath, ffprobe, ct);
+                var ffprobe = _ffmpegLocator.ResolveFfprobe(ffmpegOverride);
+                probe = await _ffprobeService.TryProbeAsync(inputPath, ffprobe, ct);
             }
             catch { }
 
             if (probe is not null)
-                AnsiConsole.MarkupLine($"[grey]Source: {Markup.Escape(FfprobeService.FormatProbeHuman(probe))} — {Markup.Escape(Path.GetFileName(inputPath))}[/]");
+                AnsiConsole.MarkupLine($"[grey]Source: {Markup.Escape(_ffprobeService.FormatProbeHuman(probe))} — {Markup.Escape(_fileSystem.GetFileName(inputPath))}[/]");
             else
-                AnsiConsole.MarkupLine($"[grey]Source: {Markup.Escape(Path.GetFileName(inputPath))}[/]");
+                AnsiConsole.MarkupLine($"[grey]Source: {Markup.Escape(_fileSystem.GetFileName(inputPath))}[/]");
 
             var format = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
@@ -152,7 +168,7 @@ public static class InteractiveConverter
             if (string.IsNullOrWhiteSpace(Path.GetExtension(outputPath)))
                 outputPath += fmtInfo.Extension;
 
-            if (File.Exists(outputPath))
+            if (_fileSystem.FileExists(outputPath))
             {
                 var ow = AnsiConsole.Confirm($"The file already exists: \"{Path.GetFileName(outputPath)}\". Overwrite?", false);
                 if (!ow)
@@ -174,7 +190,7 @@ public static class InteractiveConverter
             if (sampleRate != null) table.AddRow("Sample rate", sampleRate.Value.ToString());
             AnsiConsole.Write(table);
 
-            try { ConversionOptionsValidator.EnsureDifferentPaths(inputPath, outputPath); }
+            try { _validator.EnsureDifferentPaths(inputPath, outputPath); }
             catch (ArgumentException ex) { ErrorHandler.FailInteractive(ex.Message); initialInput = inputPath; continue; }
 
             if (!AnsiConsole.Confirm("Start conversion?", true))
@@ -185,9 +201,10 @@ public static class InteractiveConverter
 
             try
             {
-                var outputDirectory = Path.GetDirectoryName(Path.GetFullPath(outputPath));
-                if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory))
-                    Directory.CreateDirectory(outputDirectory);
+                var fullPath = _fileSystem.GetFullPath(outputPath);
+                var outputDirectory = _fileSystem.GetDirectoryName(fullPath);
+                if (!string.IsNullOrEmpty(outputDirectory) && !_fileSystem.DirectoryExists(outputDirectory))
+                    _fileSystem.CreateDirectory(outputDirectory);
             }
             catch (Exception ex)
             {
@@ -197,7 +214,7 @@ public static class InteractiveConverter
             }
 
             string ffmpeg;
-            try { ffmpeg = FfmpegLocator.Resolve(ffmpegOverride); }
+            try { ffmpeg = _ffmpegLocator.Resolve(ffmpegOverride); }
             catch (Exception ex) { ErrorHandler.FailInteractive(ex.Message); return 2; }
 
             var opts = new ConversionOptions
@@ -216,12 +233,12 @@ public static class InteractiveConverter
             };
 
             List<string> args;
-            try { args = FfmpegConverter.BuildArguments(opts); }
+            try { args = _argumentBuilder.BuildArguments(opts); } // uses injected validator internally
             catch (Exception ex) { ErrorHandler.FailInteractive(ex.Message); continue; }
 
             AnsiConsole.MarkupLine("[grey]Conversion in progress...[/]");
             (int code, string stderr) conversionResult;
-            try { conversionResult = await FfmpegConverter.RunWithOutputAsync(ffmpeg, args, ct); }
+            try { conversionResult = await _ffmpegRunner.RunAsync(ffmpeg, args, ct); }
             catch (OperationCanceledException)
             {
                 AnsiConsole.MarkupLine("[yellow]Conversion cancelled.[/]");
@@ -230,7 +247,7 @@ public static class InteractiveConverter
             var (code, stderr) = conversionResult;
             if (code == 0)
             {
-                var fi = new FileInfo(outputPath);
+                var fi = _fileSystem.GetFileInfo(outputPath);
                 AnsiConsole.MarkupLine($"[green]OK[/] {Markup.Escape(outputPath)} ({fi.Length / 1024} KB)");
             }
             else

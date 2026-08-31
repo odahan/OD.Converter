@@ -1,10 +1,9 @@
 namespace OD.Converter.Services;
 
 /// <summary>Locates FFmpeg and FFprobe executables.</summary>
-public static class FfmpegLocator
+public class FfmpegLocator : IFfmpegLocator
 {
-    /// <summary>Resolves the path to an FFmpeg-related executable.</summary>
-    public static string Resolve(string? explicitPath, string binary = "ffmpeg.exe")
+    public string Resolve(string? explicitPath, string binary = "ffmpeg.exe")
     {
         if (!string.IsNullOrWhiteSpace(explicitPath))
         {
@@ -59,7 +58,7 @@ public static class FfmpegLocator
     }
 
     /// <summary>Resolves FFprobe, preferring the sibling of an explicit FFmpeg path.</summary>
-    public static string ResolveFfprobe(string? explicitFfmpegPath)
+    public string ResolveFfprobe(string? explicitFfmpegPath)
     {
         if (!string.IsNullOrWhiteSpace(explicitFfmpegPath))
         {

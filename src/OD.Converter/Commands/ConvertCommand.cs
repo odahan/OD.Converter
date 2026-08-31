@@ -5,10 +5,25 @@ using Spectre.Console;
 namespace OD.Converter.Commands;
 
 /// <summary>Handles the non-interactive audio conversion command.</summary>
-public static class ConvertCommand
+public class ConvertCommand
 {
+    private readonly IFfmpegRunner _ffmpegRunner;
+    private readonly IFfmpegLocator _ffmpegLocator;
+    private readonly IFileSystem _fileSystem;
+    private readonly IArgumentBuilder _argumentBuilder;
+    private readonly IConversionOptionsValidator _validator;
+
+    public ConvertCommand(IFfmpegRunner ffmpegRunner, IFfmpegLocator ffmpegLocator, IFileSystem fileSystem, IArgumentBuilder argumentBuilder, IConversionOptionsValidator validator)
+    {
+        _ffmpegRunner = ffmpegRunner;
+        _ffmpegLocator = ffmpegLocator;
+        _fileSystem = fileSystem;
+        _argumentBuilder = argumentBuilder;
+        _validator = validator;
+    }
+
     /// <summary>Parses conversion arguments and runs FFmpeg.</summary>
-    public static async Task<int> RunAsync(string[] args, CancellationToken ct)
+    public async Task<int> RunAsync(string[] args, CancellationToken ct)
     {
         try
         {
@@ -24,7 +39,7 @@ public static class ConvertCommand
             var input = parsed.Positional[0].Trim().Trim('"');
             var targetFormat = parsed.TargetFormat.Trim().TrimStart('.').ToLowerInvariant();
             var format = FormatRegistry.Get(targetFormat);
-            if (!File.Exists(input)) return ErrorHandler.Fail($"Source file not found: \"{input}\".");
+                if (!_fileSystem.FileExists(input)) return ErrorHandler.Fail($"Source file not found: \"{input}\".");
             if (format is null) return ErrorHandler.Fail($"Unsupported format: \"{targetFormat}\". Formats: {FormatRegistry.SupportedList}");
 
             var output = string.IsNullOrWhiteSpace(parsed.OutputPath)
@@ -40,22 +55,22 @@ public static class ConvertCommand
                 FfmpegPath = parsed.FfmpegPath, DryRun = parsed.DryRun,
             };
 
-            ConversionOptionsValidator.Validate(options);
-            ConversionOptionsValidator.EnsureDifferentPaths(input, output);
-            if (File.Exists(output) && options.Overwrite == "never" && !options.DryRun)
+            _validator.Validate(options);
+            _validator.EnsureDifferentPaths(input, output);
+            if (_fileSystem.FileExists(output) && options.Overwrite == "never" && !options.DryRun)
                 return ErrorHandler.Fail($"Output file already exists: \"{output}\". Use --overwrite always or choose another name.");
 
             if (!options.DryRun)
             {
-                var outputDirectory = Path.GetDirectoryName(Path.GetFullPath(output));
-                if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory)) Directory.CreateDirectory(outputDirectory);
+                var outputDirectory = _fileSystem.GetDirectoryName(_fileSystem.GetFullPath(output));
+                if (!string.IsNullOrEmpty(outputDirectory) && !_fileSystem.DirectoryExists(outputDirectory)) _fileSystem.CreateDirectory(outputDirectory);
             }
 
             string ffmpeg;
-            try { ffmpeg = FfmpegLocator.Resolve(parsed.FfmpegPath); }
+            try { ffmpeg = _ffmpegLocator.Resolve(parsed.FfmpegPath); }
             catch (Exception ex) { return ErrorHandler.Fail(ex.Message, 2); }
 
-            var ffmpegArguments = FfmpegConverter.BuildArguments(options);
+            var ffmpegArguments = _argumentBuilder.BuildArguments(options);
             if (options.DryRun)
             {
                 AnsiConsole.MarkupLine("[grey]Dry run:[/]");
@@ -64,11 +79,11 @@ public static class ConvertCommand
             }
 
             AnsiConsole.MarkupLine($"[grey]Converting:[/] {Markup.Escape(Path.GetFileName(input))} → {Markup.Escape(Path.GetFileName(output))} [[{format.Key}]]");
-            var (exitCode, standardError) = await FfmpegConverter.RunWithOutputAsync(ffmpeg, ffmpegArguments, ct);
+            var (exitCode, standardError) = await _ffmpegRunner.RunAsync(ffmpeg, ffmpegArguments, ct);
             if (exitCode == 0)
             {
-                if (!File.Exists(output)) return ErrorHandler.Fail($"Conversion completed but output file was not found: \"{output}\".", 3);
-                var fileInfo = new FileInfo(output);
+                if (!_fileSystem.FileExists(output)) return ErrorHandler.Fail($"Conversion completed but output file was not found: \"{output}\".", 3);
+                var fileInfo = _fileSystem.GetFileInfo(output);
                 AnsiConsole.MarkupLine($"[green]OK[/] {Markup.Escape(output)} ({fileInfo.Length / 1024} KB)");
                 return 0;
             }

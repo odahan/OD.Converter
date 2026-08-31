@@ -1,17 +1,28 @@
 using OD.Converter.Models;
 using OD.Converter.Services;
+using Moq;
 using Xunit;
 
 namespace OD.Converter.Tests;
 
 public sealed class ConversionOptionsValidatorTests
 {
+    private readonly Mock<IFileSystem> _fsMock;
+    private readonly ConversionOptionsValidator _validator;
+
+    public ConversionOptionsValidatorTests()
+    {
+        _fsMock = new Mock<IFileSystem>();
+        _fsMock.Setup(f => f.GetFullPath(It.IsAny<string>())).Returns<string>(s => s);
+        _validator = new ConversionOptionsValidator(_fsMock.Object);
+    }
+
     [Fact]
     public void Validate_AcceptsSupportedMp3Options()
     {
         var options = CreateOptions("mp3", bitrate: "192k", sampleRate: 48000, channels: 2);
 
-        ConversionOptionsValidator.Validate(options);
+        _validator.Validate(options);
     }
 
     [Theory]
@@ -21,7 +32,7 @@ public sealed class ConversionOptionsValidatorTests
     {
         var options = CreateOptions("mp3", quality: quality);
 
-        var exception = Assert.Throws<ArgumentException>(() => ConversionOptionsValidator.Validate(options));
+        var exception = Assert.Throws<ArgumentException>(() => _validator.Validate(options));
 
         Assert.Contains("--quality", exception.Message);
     }
@@ -31,7 +42,7 @@ public sealed class ConversionOptionsValidatorTests
     {
         var options = CreateOptions("flac", quality: 5);
 
-        var exception = Assert.Throws<ArgumentException>(() => ConversionOptionsValidator.Validate(options));
+        var exception = Assert.Throws<ArgumentException>(() => _validator.Validate(options));
 
         Assert.Contains("not supported", exception.Message);
     }
@@ -43,7 +54,7 @@ public sealed class ConversionOptionsValidatorTests
     {
         var options = CreateOptions("wav", bitDepth: bitDepth);
 
-        Assert.Throws<ArgumentException>(() => ConversionOptionsValidator.Validate(options));
+        Assert.Throws<ArgumentException>(() => _validator.Validate(options));
     }
 
     [Theory]
@@ -53,16 +64,17 @@ public sealed class ConversionOptionsValidatorTests
     {
         var options = CreateOptions("flac", compressionLevel: compressionLevel);
 
-        Assert.Throws<ArgumentException>(() => ConversionOptionsValidator.Validate(options));
+        Assert.Throws<ArgumentException>(() => _validator.Validate(options));
     }
 
     [Fact]
     public void EnsureDifferentPaths_RejectsPathsToTheSameFile()
     {
         var path = Path.Combine(Path.GetTempPath(), "odconv", "track.wav");
+        _fsMock.Setup(f => f.GetFullPath(It.IsAny<string>())).Returns(path);
 
         var exception = Assert.Throws<ArgumentException>(() =>
-            ConversionOptionsValidator.EnsureDifferentPaths(path, Path.GetFullPath(path)));
+            _validator.EnsureDifferentPaths(path, path));
 
         Assert.Contains("must be different", exception.Message);
     }
@@ -71,8 +83,10 @@ public sealed class ConversionOptionsValidatorTests
     public void BuildArguments_UsesRequestedWavBitDepth()
     {
         var options = CreateOptions("wav", bitDepth: 24);
-
-        var arguments = FfmpegConverter.BuildArguments(options);
+        var validatorMock = new Mock<IConversionOptionsValidator>();
+        validatorMock.Setup(v => v.Validate(It.IsAny<ConversionOptions>()));
+        var converter = new FfmpegConverter(validatorMock.Object);
+        var arguments = converter.BuildArguments(options);
 
         Assert.Contains("pcm_s24le", arguments);
     }

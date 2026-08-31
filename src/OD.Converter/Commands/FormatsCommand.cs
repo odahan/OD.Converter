@@ -4,10 +4,9 @@ using Spectre.Console;
 namespace OD.Converter.Commands;
 
 /// <summary>Lists available output formats.</summary>
-public static class FormatsCommand
+public class FormatsCommand
 {
-    /// <summary>Runs the formats command.</summary>
-    public static Task<int> RunAsync(string[] args, CancellationToken ct)
+    public Task<int> RunAsync(string[] args, CancellationToken ct)
     {
         if (args.Any(a => a is "--help" or "-h" or "-?"))
         {

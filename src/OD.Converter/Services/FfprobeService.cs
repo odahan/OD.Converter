@@ -3,9 +3,6 @@ using System.Text.Json;
 
 namespace OD.Converter.Services;
 
-/// <summary>
-/// Contains audio metadata obtained from FFprobe.
-/// </summary>
 public sealed record ProbeInfo(
     string FormatName,
     string CodecName,
@@ -16,25 +13,16 @@ public sealed record ProbeInfo(
     long BitRate,
     string RawJson);
 
-/// <summary>
-/// Reads audio metadata through FFprobe.
-/// </summary>
-public static class FfprobeService
+public class FfprobeService : IFfprobeService
 {
-    /// <summary>
-    /// Attempts to read metadata and returns <see langword="null"/> when probing fails.
-    /// </summary>
-    public static async Task<ProbeInfo?> TryProbeAsync(string input, string ffprobePath, CancellationToken ct = default)
+    public async Task<ProbeInfo?> TryProbeAsync(string input, string ffprobePath, CancellationToken ct = default)
     {
         try { return await ProbeAsync(input, ffprobePath, ct); }
         catch (OperationCanceledException) { throw; }
         catch { return null; }
     }
 
-    /// <summary>
-    /// Reads metadata from an audio file.
-    /// </summary>
-    public static async Task<ProbeInfo> ProbeAsync(string input, string ffprobePath, CancellationToken ct)
+    public async Task<ProbeInfo> ProbeAsync(string input, string ffprobePath, CancellationToken ct)
     {
         var psi = new ProcessStartInfo(ffprobePath)
         {
@@ -90,10 +78,7 @@ public static class FfprobeService
         return new ProbeInfo(formatName, codec, sr, ch, bps, duration, bitRate, stdout);
     }
 
-    /// <summary>
-    /// Formats probe metadata for display in the interactive interface.
-    /// </summary>
-    public static string FormatProbeHuman(ProbeInfo p)
+    public string FormatProbeHuman(ProbeInfo p)
     {
         var dur = TimeSpan.FromSeconds(p.DurationSeconds);
         var durStr = dur.TotalHours >= 1 ? dur.ToString(@"h\:mm\:ss") : dur.ToString(@"m\:ss");

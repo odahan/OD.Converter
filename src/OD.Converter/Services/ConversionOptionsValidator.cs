@@ -6,16 +6,19 @@ namespace OD.Converter.Services;
 /// <summary>
 /// Validates conversion options before an FFmpeg process is started.
 /// </summary>
-public static partial class ConversionOptionsValidator
+public partial class ConversionOptionsValidator : IConversionOptionsValidator
 {
+    private readonly IFileSystem _fileSystem;
     private static readonly HashSet<int> SupportedSampleRates = [22050, 44100, 48000, 96000];
     private static readonly HashSet<int> SupportedChannels = [1, 2, 6];
     private static readonly HashSet<int> SupportedBitDepths = [16, 24, 32];
 
-    /// <summary>
-    /// Validates conversion options and throws a descriptive exception when they are invalid.
-    /// </summary>
-    public static void Validate(ConversionOptions options)
+    public ConversionOptionsValidator(IFileSystem fileSystem)
+    {
+        _fileSystem = fileSystem;
+    }
+
+    public void Validate(ConversionOptions options)
     {
         var format = FormatRegistry.Get(options.TargetFormat)
             ?? throw new ArgumentException($"Unsupported format: {options.TargetFormat}.");
@@ -69,12 +72,11 @@ public static partial class ConversionOptionsValidator
         }
     }
 
-    /// <summary>
-    /// Validates that input and output refer to different filesystem locations.
-    /// </summary>
-    public static void EnsureDifferentPaths(string inputPath, string outputPath)
+    public void EnsureDifferentPaths(string inputPath, string outputPath)
     {
-        if (string.Equals(Path.GetFullPath(inputPath), Path.GetFullPath(outputPath), StringComparison.OrdinalIgnoreCase))
+        var fullInput = _fileSystem.GetFullPath(inputPath);
+        var fullOutput = _fileSystem.GetFullPath(outputPath);
+        if (string.Equals(fullInput, fullOutput, StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("The output file must be different from the source file.");
     }
 

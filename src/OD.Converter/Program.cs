@@ -4,6 +4,12 @@ using Spectre.Console;
 
 var rawArgs = args;
 
+var fileSystem = new FileSystem();
+var validator = new ConversionOptionsValidator(fileSystem);
+var ffmpegLocator = new FfmpegLocator();
+var ffmpegConverter = new FfmpegConverter(validator);
+var ffprobeService = new FfprobeService();
+
 if (rawArgs.Length == 0 || ShouldRunInteractive(rawArgs))
 {
     string? initialInput = rawArgs.Length == 1 ? rawArgs[0].Trim().Trim('"') : null;
@@ -18,9 +24,10 @@ if (rawArgs.Length == 0 || ShouldRunInteractive(rawArgs))
     for (int i = 0; i < rawArgs.Length - 1; i++)
         if (rawArgs[i] == "--ffmpeg") ffmpegOverride = rawArgs[i + 1];
 
+    var interactiveConverter = new InteractiveConverter(ffmpegLocator, ffmpegConverter, ffprobeService, fileSystem, ffmpegConverter, validator);
     using var cts = new CancellationTokenSource();
     Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
-    return await InteractiveConverter.RunAsync(initialInput, ffmpegOverride, cts.Token);
+    return await interactiveConverter.RunAsync(initialInput, ffmpegOverride, cts.Token);
 }
 
 var cmd = rawArgs[0].ToLowerInvariant();
@@ -33,14 +40,14 @@ int exit;
 switch (cmd)
 {
     case "convert":
-        exit = await ConvertCommand.RunAsync(rest, cts2.Token);
+        exit = await new ConvertCommand(ffmpegConverter, ffmpegLocator, fileSystem, ffmpegConverter, validator).RunAsync(rest, cts2.Token);
         break;
     case "probe":
     case "info":
-        exit = await ProbeCommand.RunAsync(rest, cts2.Token);
+        exit = await new ProbeCommand(ffmpegLocator, fileSystem, ffprobeService).RunAsync(rest, cts2.Token);
         break;
     case "formats":
-        exit = await FormatsCommand.RunAsync(rest, cts2.Token);
+        exit = await new FormatsCommand().RunAsync(rest, cts2.Token);
         break;
     case "--help": case "-h": case "-?": case "help":
         PrintRootHelp(); exit = 0; break;

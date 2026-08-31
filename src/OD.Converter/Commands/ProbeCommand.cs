@@ -4,10 +4,21 @@ using Spectre.Console;
 namespace OD.Converter.Commands;
 
 /// <summary>Displays audio metadata obtained through FFprobe.</summary>
-public static class ProbeCommand
+public class ProbeCommand
 {
+    private readonly IFfmpegLocator _ffmpegLocator;
+    private readonly IFileSystem _fileSystem;
+    private readonly IFfprobeService _ffprobeService;
+
+    public ProbeCommand(IFfmpegLocator ffmpegLocator, IFileSystem fileSystem, IFfprobeService ffprobeService)
+    {
+        _ffmpegLocator = ffmpegLocator;
+        _fileSystem = fileSystem;
+        _ffprobeService = ffprobeService;
+    }
+
     /// <summary>Runs the probe command.</summary>
-    public static async Task<int> RunAsync(string[] args, CancellationToken ct)
+    public async Task<int> RunAsync(string[] args, CancellationToken ct)
     {
         string? input = null;
         bool json = false;
@@ -39,19 +50,19 @@ public static class ProbeCommand
             return 1;
         }
         input = input.Trim().Trim('"');
-        if (!File.Exists(input))
+        if (!_fileSystem.FileExists(input))
         {
             ErrorHandler.Fail($"Source file not found: \"{input}\".");
             return 1;
         }
 
         string ffprobe;
-        try { ffprobe = FfmpegLocator.ResolveFfprobe(ffmpegOverride); }
+        try { ffprobe = _ffmpegLocator.ResolveFfprobe(ffmpegOverride); }
         catch (Exception ex) { ErrorHandler.Fail(ex.Message); return 2; }
 
         try
         {
-            var info = await FfprobeService.ProbeAsync(input, ffprobe, ct);
+            var info = await _ffprobeService.ProbeAsync(input, ffprobe, ct);
             if (json) Console.WriteLine(info.RawJson);
             else
             {
@@ -66,7 +77,7 @@ public static class ProbeCommand
                 table.AddRow("Bits", info.BitsPerSample > 0 ? info.BitsPerSample.ToString() : "-");
                 table.AddRow("Bitrate", info.BitRate > 0 ? $"{info.BitRate / 1000} kb/s" : "-");
                 AnsiConsole.Write(table);
-                AnsiConsole.MarkupLine($"[grey]{Markup.Escape(FfprobeService.FormatProbeHuman(info))}[/]");
+                AnsiConsole.MarkupLine($"[grey]{Markup.Escape(_ffprobeService.FormatProbeHuman(info))}[/]");
             }
             return 0;
         }
