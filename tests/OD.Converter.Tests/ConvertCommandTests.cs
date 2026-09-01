@@ -35,7 +35,7 @@ public sealed class ConvertCommandTests
             .Callback<string>(s => Console.WriteLine($"FileExists called with: {s}"));
         _fsMock.Setup(f => f.GetFullPath(It.IsAny<string>())).Returns<string>(s => s);
         _fsMock.Setup(f => f.GetDirectoryName(It.IsAny<string>())).Returns<string>(s => Path.GetDirectoryName(s) ?? string.Empty);
-        _fsMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true);
+        _fsMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(false);
         _fsMock.Setup(f => f.CreateDirectory(It.IsAny<string>()));
         _fsMock.Setup(f => f.GetFileName(It.IsAny<string>())).Returns<string>(s => Path.GetFileName(s));
         _fsMock.Setup(f => f.GetFileNameWithoutExtension(It.IsAny<string>())).Returns<string>(s => Path.GetFileNameWithoutExtension(s));
@@ -58,6 +58,7 @@ public sealed class ConvertCommandTests
     public async Task RunAsync_ReturnsError_WhenSourceFileDoesNotExist()
     {
         var args = new[] { "nonexistent.wav", "--to", "mp3" };
+        _fsMock.Setup(f => f.DirectoryExists("nonexistent.wav")).Returns(false);
         _fsMock.Setup(f => f.FileExists("nonexistent.wav")).Returns(false);
         var exit = await _command.RunAsync(args, CancellationToken.None);
         Assert.Equal(1, exit);
@@ -67,6 +68,7 @@ public sealed class ConvertCommandTests
     public async Task RunAsync_ReturnsError_WhenTargetFormatMissing()
     {
         var args = new[] { "input.wav" };
+        _fsMock.Setup(f => f.DirectoryExists("input.wav")).Returns(false);
         _fsMock.Setup(f => f.FileExists("input.wav")).Returns(true);
         var exit = await _command.RunAsync(args, CancellationToken.None);
         Assert.Equal(1, exit);
@@ -83,8 +85,11 @@ public sealed class ConvertCommandTests
         File.WriteAllBytes(inputPath, new byte[1024]);
         try
         {
+            _fsMock.Setup(f => f.DirectoryExists(inputPath)).Returns(false);
+            _fsMock.Setup(f => f.DirectoryExists(inputPath)).Returns(false);
             _fsMock.Setup(f => f.FileExists(inputPath)).Returns(true);
             _fsMock.Setup(f => f.FileExists(outputPath)).Returns(true);
+            
             _locatorMock.Setup(l => l.Resolve(null, It.IsAny<string>())).Returns("ffmpeg.exe");
             _builderMock.Setup(b => b.BuildArguments(It.IsAny<ConversionOptions>())).Returns(new List<string> { "-i", inputPath });
 
@@ -121,6 +126,7 @@ public sealed class ConvertCommandTests
         try
         {
             // Set up file existence
+            _fsMock.Setup(f => f.DirectoryExists(inputPath)).Returns(false);
             _fsMock.Setup(f => f.FileExists(inputPath)).Returns(true);
             _fsMock.Setup(f => f.FileExists(outputPath)).Returns(true);
             
@@ -133,6 +139,7 @@ public sealed class ConvertCommandTests
             var exit = await _command.RunAsync(args, CancellationToken.None);
 
             // Verify all mocks were called before asserting exit code
+            _fsMock.Verify(f => f.DirectoryExists(inputPath), Times.AtLeastOnce);
             _fsMock.Verify(f => f.FileExists(inputPath), Times.Once);
             _fsMock.Verify(f => f.FileExists(outputPath), Times.AtLeastOnce);
             _validatorMock.Verify(v => v.Validate(It.IsAny<ConversionOptions>()), Times.Once);
@@ -168,6 +175,7 @@ public sealed class ConvertCommandTests
         try
         {
             // Set up file existence
+            _fsMock.Setup(f => f.DirectoryExists(inputPath)).Returns(false);
             _fsMock.Setup(f => f.FileExists(inputPath)).Returns(true);
             _fsMock.Setup(f => f.FileExists(outputPath)).Returns(true);
             
@@ -179,6 +187,7 @@ public sealed class ConvertCommandTests
             var exit = await _command.RunAsync(args, CancellationToken.None);
 
             // Verify mocks were called before asserting exit code
+            _fsMock.Verify(f => f.DirectoryExists(inputPath), Times.AtLeastOnce);
             _fsMock.Verify(f => f.FileExists(inputPath), Times.Once);
             _fsMock.Verify(f => f.FileExists(outputPath), Times.AtLeastOnce);
             _validatorMock.Verify(v => v.Validate(It.IsAny<ConversionOptions>()), Times.Once);
