@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/odahan/OD.Converter</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/odahan/OD.Converter</PackageProjectUrl>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishSingleFile>true</PublishSingleFile>

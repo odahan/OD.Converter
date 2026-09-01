@@ -41,6 +41,8 @@ odconv convert input.wav --to opus --bitrate 128k
 odconv convert input.wav --to flac --compression 5
 odconv convert input.wav --to wav --bit-depth 24 --mono --sample-rate 22050 -o out-mono.wav
 odconv convert input.wav --to mp3 --mono --overwrite always --dry-run
+odconv convert *.wav --to mp3 --output-dir ./mp3          # batch convert all WAVs
+odconv convert . --to flac --recursive --pattern "*.wav"  # recursive batch
 odconv probe track.mp3
 odconv probe track.mp3 --json
 odconv formats
@@ -53,7 +55,10 @@ odconv --version
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--to, -t` | Target format (required): `wav, flac, mp3, ogg, opus, aac, m4a, aiff, wma, wv, alac` | - |
-| `-o, --output` | Output file | `<name>.<ext>` next to source, or `<name>-mono.<ext>` with `--mono` |
+| `-o, --output` | Output file (only for single input) | `<name>.<ext>` next to source, or `<name>-mono.<ext>` with `--mono` |
+| `--output-dir` | Output directory for multiple inputs, preserves structure | same as input |
+| `--recursive` | Process subdirectories recursively | `false` |
+| `--pattern` | File pattern e.g. `*.wav` (default: all files) | `*` |
 | `-b, --bitrate` | Bitrate e.g. `320k, 192k, 128k` (lossy) | mp3 `320k`, ogg `192k`→q6, opus `128k`, aac/m4a/wma `192k` |
 | `-q, --quality` | VBR quality: mp3 `0-9` (0 best), ogg `0-10` | mp3 CBR if omitted, ogg `6` |
 | `--sample-rate` | `44100, 48000, 22050, 96000` | keep source |
