@@ -2,24 +2,27 @@
 using OD.Converter.Services;
 using Spectre.Console;
 
+// Set up core services
 var rawArgs = args;
-
 var fileSystem = new FileSystem();
 var validator = new ConversionOptionsValidator(fileSystem);
 var ffmpegLocator = new FfmpegLocator();
 var ffmpegConverter = new FfmpegConverter(validator);
 var ffprobeService = new FfprobeService();
 
+// If no arguments or a file path is provided, enter interactive mode
 if (rawArgs.Length == 0 || ShouldRunInteractive(rawArgs))
 {
     string? initialInput = rawArgs.Length == 1 ? rawArgs[0].Trim().Trim('"') : null;
 
+    // Validate the input file if given
     if (initialInput != null && !File.Exists(initialInput) && !initialInput.StartsWith('-'))
     {
         AnsiConsole.MarkupLine($"[red]Error:[/] Source file not found: \"{Markup.Escape(initialInput)}\"");
         return 1;
     }
 
+    // Check for FFmpeg override passed to interactive mode
     string? ffmpegOverride = null;
     for (int i = 0; i < rawArgs.Length - 1; i++)
         if (rawArgs[i] == "--ffmpeg") ffmpegOverride = rawArgs[i + 1];
@@ -30,6 +33,7 @@ if (rawArgs.Length == 0 || ShouldRunInteractive(rawArgs))
     return await interactiveConverter.RunAsync(initialInput, ffmpegOverride, cts.Token);
 }
 
+// Parse the command name and remaining arguments
 var cmd = rawArgs[0].ToLowerInvariant();
 string[] rest = rawArgs.Skip(1).ToArray();
 
@@ -62,6 +66,7 @@ switch (cmd)
 }
 return exit;
 
+// Determines whether the given arguments indicate an interactive session
 static bool ShouldRunInteractive(string[] a)
 {
     if (a.Length == 0) return true;
@@ -69,15 +74,18 @@ static bool ShouldRunInteractive(string[] a)
     {
         var p = a[0].Trim().Trim('"');
         if (File.Exists(p)) return true;
+        // If it looks like a file path (contains dot, backslash, or slash) and is not a command, treat as interactive
         if (!p.StartsWith('-') && !IsSubcommand(p) && (p.Contains('.') || p.Contains('\\') || p.Contains('/')))
             return true;
     }
     return false;
 }
 
+// Checks if a string is a known subcommand
 static bool IsSubcommand(string s) =>
     s is "convert" or "probe" or "info" or "formats" or "help" or "--help" or "-h" or "--version" or "-?";
 
+// Prints the root help text
 static void PrintRootHelp()
 {
     AnsiConsole.WriteLine("odconv — audio converter");

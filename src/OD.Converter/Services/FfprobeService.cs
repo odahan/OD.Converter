@@ -3,6 +3,17 @@ using System.Text.Json;
 
 namespace OD.Converter.Services;
 
+/// <summary>
+/// Audio metadata returned by FFprobe.
+/// </summary>
+/// <param name="FormatName">Container format name.</param>
+/// <param name="CodecName">Audio codec name.</param>
+/// <param name="SampleRate">Sample rate in Hz.</param>
+/// <param name="Channels">Number of audio channels.</param>
+/// <param name="BitsPerSample">Bit depth (bits per sample).</param>
+/// <param name="DurationSeconds">Duration in seconds.</param>
+/// <param name="BitRate">Bit rate in bits per second.</param>
+/// <param name="RawJson">Raw JSON output from FFprobe.</param>
 public sealed record ProbeInfo(
     string FormatName,
     string CodecName,
@@ -13,8 +24,12 @@ public sealed record ProbeInfo(
     long BitRate,
     string RawJson);
 
+/// <summary>
+/// Service that invokes FFprobe to extract audio metadata.
+/// </summary>
 public class FfprobeService : IFfprobeService
 {
+    /// <inheritdoc />
     public async Task<ProbeInfo?> TryProbeAsync(string input, string ffprobePath, CancellationToken ct = default)
     {
         try { return await ProbeAsync(input, ffprobePath, ct); }
@@ -22,6 +37,7 @@ public class FfprobeService : IFfprobeService
         catch { return null; }
     }
 
+    /// <inheritdoc />
     public async Task<ProbeInfo> ProbeAsync(string input, string ffprobePath, CancellationToken ct)
     {
         var psi = new ProcessStartInfo(ffprobePath)
@@ -53,10 +69,12 @@ public class FfprobeService : IFfprobeService
         using var doc = JsonDocument.Parse(stdout);
         var root = doc.RootElement;
 
+        // Extract format-level information
         var formatName = root.TryGetProperty("format", out var fmt) && fmt.TryGetProperty("format_name", out var fn) ? fn.GetString() ?? "" : "";
         var duration = fmt.TryGetProperty("duration", out var d) && double.TryParse(d.GetString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var dd) ? dd : 0;
         var bitRate = fmt.TryGetProperty("bit_rate", out var br) && long.TryParse(br.GetString(), out var brr) ? brr : 0;
 
+        // Locate the first audio stream
         string codec = "";
         int sr = 0, ch = 0, bps = 0;
         if (root.TryGetProperty("streams", out var streams) && streams.ValueKind == JsonValueKind.Array)
@@ -78,6 +96,7 @@ public class FfprobeService : IFfprobeService
         return new ProbeInfo(formatName, codec, sr, ch, bps, duration, bitRate, stdout);
     }
 
+    /// <inheritdoc />
     public string FormatProbeHuman(ProbeInfo p)
     {
         var dur = TimeSpan.FromSeconds(p.DurationSeconds);

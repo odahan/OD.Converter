@@ -13,6 +13,7 @@ public class InteractiveConverter
     private readonly IArgumentBuilder _argumentBuilder;
     private readonly IConversionOptionsValidator _validator;
 
+    /// <summary>Initializes a new instance of the <see cref="InteractiveConverter"/> class.</summary>
     public InteractiveConverter(IFfmpegLocator ffmpegLocator, IFfmpegRunner ffmpegRunner, IFfprobeService ffprobeService, IFileSystem fileSystem, IArgumentBuilder argumentBuilder, IConversionOptionsValidator validator)
     {
         _ffmpegLocator = ffmpegLocator;
@@ -23,6 +24,7 @@ public class InteractiveConverter
         _validator = validator;
     }
 
+    /// <summary>Runs the interactive conversion loop until the user exits.</summary>
     public async Task<int> RunAsync(string? initialInput, string? ffmpegOverride, CancellationToken ct)
     {
         while (true)
@@ -31,6 +33,7 @@ public class InteractiveConverter
             AnsiConsole.Write(new FigletText("odconv").Color(Color.Cyan1));
             AnsiConsole.MarkupLine($"[grey]Audio conversion — version {ApplicationInfo.Version}. Leave blank and press Enter to exit.[/]");
 
+            // Prompt for source file if not provided as an argument
             string inputPath = initialInput ?? "";
             if (string.IsNullOrWhiteSpace(inputPath))
             {
@@ -52,6 +55,7 @@ public class InteractiveConverter
                 inputPath = inputPath.Trim().Trim('"');
             }
 
+            // Validate existence
             if (!_fileSystem.FileExists(inputPath))
             {
                 ErrorHandler.FailInteractive($"Source file not found: \"{inputPath}\".");
@@ -59,6 +63,7 @@ public class InteractiveConverter
                 continue;
             }
 
+            // Attempt to probe the source file for metadata
             ProbeInfo? probe = null;
             try
             {
@@ -72,6 +77,7 @@ public class InteractiveConverter
             else
                 AnsiConsole.MarkupLine($"[grey]Source: {Markup.Escape(_fileSystem.GetFileName(inputPath))}[/]");
 
+            // Select target format
             var format = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("Target format:")
@@ -84,6 +90,7 @@ public class InteractiveConverter
             int? compression = null;
             int? bitDepth = null;
 
+            // Lossy formats: ask for bitrate or quality
             if (!fmtInfo.IsLossless)
             {
                 if (format == "mp3")
@@ -124,6 +131,7 @@ public class InteractiveConverter
             }
             else
             {
+                // Lossless formats: additional parameters
                 if (format == "flac")
                 {
                     compression = AnsiConsole.Prompt(
@@ -155,6 +163,7 @@ public class InteractiveConverter
                 sampleRate = int.Parse(srChoice);
             }
 
+            // Suggest a default output filename
             var defaultOut = mono
                 ? FormatRegistry.DefaultOutputPathMono(inputPath, format)
                 : FormatRegistry.DefaultOutputPath(inputPath, format);
@@ -168,6 +177,7 @@ public class InteractiveConverter
             if (string.IsNullOrWhiteSpace(Path.GetExtension(outputPath)))
                 outputPath += fmtInfo.Extension;
 
+            // Check for existing file
             if (_fileSystem.FileExists(outputPath))
             {
                 var ow = AnsiConsole.Confirm($"The file already exists: \"{Path.GetFileName(outputPath)}\". Overwrite?", false);
@@ -178,6 +188,7 @@ public class InteractiveConverter
                 }
             }
 
+            // Show summary table
             var table = new Table().Border(TableBorder.Rounded);
             table.AddColumn("Option"); table.AddColumn("Value");
             table.AddRow("Source", Markup.Escape(inputPath));
@@ -190,15 +201,18 @@ public class InteractiveConverter
             if (sampleRate != null) table.AddRow("Sample rate", sampleRate.Value.ToString());
             AnsiConsole.Write(table);
 
+            // Ensure input and output are not the same file
             try { _validator.EnsureDifferentPaths(inputPath, outputPath); }
             catch (ArgumentException ex) { ErrorHandler.FailInteractive(ex.Message); initialInput = inputPath; continue; }
 
+            // Confirm conversion
             if (!AnsiConsole.Confirm("Start conversion?", true))
             {
                 initialInput = inputPath;
                 continue;
             }
 
+            // Create output directory if it does not exist
             try
             {
                 var fullPath = _fileSystem.GetFullPath(outputPath);
@@ -213,10 +227,12 @@ public class InteractiveConverter
                 continue;
             }
 
+            // Locate FFmpeg
             string ffmpeg;
             try { ffmpeg = _ffmpegLocator.Resolve(ffmpegOverride); }
             catch (Exception ex) { ErrorHandler.FailInteractive(ex.Message); return 2; }
 
+            // Build conversion options
             var opts = new ConversionOptions
             {
                 InputPath = inputPath,
@@ -236,6 +252,7 @@ public class InteractiveConverter
             try { args = _argumentBuilder.BuildArguments(opts); } // uses injected validator internally
             catch (Exception ex) { ErrorHandler.FailInteractive(ex.Message); continue; }
 
+            // Run conversion
             AnsiConsole.MarkupLine("[grey]Conversion in progress...[/]");
             (int code, string stderr) conversionResult;
             try { conversionResult = await _ffmpegRunner.RunAsync(ffmpeg, args, ct); }
@@ -252,6 +269,7 @@ public class InteractiveConverter
             }
             else
             {
+                // Extract last meaningful error line from FFmpeg stderr
                 var msg = string.IsNullOrWhiteSpace(stderr) ? $"ffmpeg code {code}" : stderr.Split('\n').Last(s => !string.IsNullOrWhiteSpace(s)).Trim();
                 if (msg.Length > 300) msg = msg[..300];
                 ErrorHandler.FailInteractive($"Conversion failed: {msg}");
@@ -259,6 +277,7 @@ public class InteractiveConverter
                 continue;
             }
 
+            // Ask to convert another file
             if (!AnsiConsole.Confirm("Convert another file?", false))
                 return 0;
 

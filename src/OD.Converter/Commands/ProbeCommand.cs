@@ -10,6 +10,10 @@ public class ProbeCommand
     private readonly IFileSystem _fileSystem;
     private readonly IFfprobeService _ffprobeService;
 
+    /// <summary>Initializes a new instance of the <see cref="ProbeCommand"/> class.</summary>
+    /// <param name="ffmpegLocator">The FFmpeg locator service.</param>
+    /// <param name="fileSystem">The file system abstraction.</param>
+    /// <param name="ffprobeService">The FFprobe service.</param>
     public ProbeCommand(IFfmpegLocator ffmpegLocator, IFileSystem fileSystem, IFfprobeService ffprobeService)
     {
         _ffmpegLocator = ffmpegLocator;

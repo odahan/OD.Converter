@@ -6,6 +6,7 @@ namespace OD.Converter.Commands;
 /// <summary>Lists available output formats.</summary>
 public class FormatsCommand
 {
+    /// <summary>Displays a table of all supported formats.</summary>
     public Task<int> RunAsync(string[] args, CancellationToken ct)
     {
         if (args.Any(a => a is "--help" or "-h" or "-?"))

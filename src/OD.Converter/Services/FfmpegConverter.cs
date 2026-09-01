@@ -15,6 +15,7 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
         _validator = validator;
     }
 
+    /// <inheritdoc />
     public List<string> BuildArguments(ConversionOptions opts)
     {
         _validator.Validate(opts);
@@ -23,6 +24,7 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
 
         var args = new List<string>();
 
+        // Overwrite behavior: -y always, -n never
         if (opts.Overwrite == "always")
             args.Add("-y");
         else
@@ -32,10 +34,11 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
         args.Add("-loglevel"); args.Add("error");
         args.Add("-i"); args.Add(opts.InputPath);
 
-        args.Add("-vn");
+        args.Add("-vn"); // disable video
 
         args.Add("-c:a"); args.Add(fmt.Codec);
 
+        // Apply format-specific parameters
         if (!fmt.IsLossless)
         {
             switch (fmt.Key)
@@ -95,17 +98,20 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
                         32 => "pcm_s32le",
                         _ => throw new ArgumentOutOfRangeException(nameof(opts.BitDepth))
                     };
+                    // Replace the codec previously set with the specific PCM variant
                     var idx = args.IndexOf(fmt.Codec);
                     if (idx >= 0) args[idx] = codec;
                 }
             }
         }
 
+        // Sample rate
         if (opts.SampleRate.HasValue)
         {
             args.Add("-ar"); args.Add(opts.SampleRate.Value.ToString());
         }
 
+        // Channel count (mono overrides any explicit channels)
         var effCh = opts.EffectiveChannels;
         if (effCh > 0)
         {
@@ -116,12 +122,16 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
         return args;
     }
 
+    /// <summary>
+    /// Builds a command-line string for display or dry-run purposes.
+    /// </summary>
     public static string BuildCommandLine(string ffmpegPath, IReadOnlyCollection<string> args)
     {
         string Quote(string s) => s.Contains(' ') || s.Contains('"') ? $"\"{s.Replace("\"", "\\\"")}\"" : s;
         return $"{Quote(ffmpegPath)} {string.Join(" ", args.Select(Quote))}";
     }
 
+    /// <inheritdoc />
     public async Task<(int ExitCode, string StandardError)> RunAsync(string ffmpegPath, IReadOnlyCollection<string> args, CancellationToken ct)
     {
         var psi = new ProcessStartInfo(ffmpegPath)

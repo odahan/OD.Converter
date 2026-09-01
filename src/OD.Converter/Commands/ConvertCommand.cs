@@ -13,6 +13,12 @@ public class ConvertCommand
     private readonly IArgumentBuilder _argumentBuilder;
     private readonly IConversionOptionsValidator _validator;
 
+    /// <summary>Initializes a new instance of the <see cref="ConvertCommand"/> class.</summary>
+    /// <param name="ffmpegRunner">The FFmpeg runner service.</param>
+    /// <param name="ffmpegLocator">The FFmpeg locator service.</param>
+    /// <param name="fileSystem">The file system abstraction.</param>
+    /// <param name="argumentBuilder">The argument builder service.</param>
+    /// <param name="validator">The conversion options validator.</param>
     public ConvertCommand(IFfmpegRunner ffmpegRunner, IFfmpegLocator ffmpegLocator, IFileSystem fileSystem, IArgumentBuilder argumentBuilder, IConversionOptionsValidator validator)
     {
         _ffmpegRunner = ffmpegRunner;

@@ -3,8 +3,10 @@ namespace OD.Converter.Services;
 /// <summary>Locates FFmpeg and FFprobe executables.</summary>
 public class FfmpegLocator : IFfmpegLocator
 {
+    /// <inheritdoc />
     public string Resolve(string? explicitPath, string binary = "ffmpeg.exe")
     {
+        // If an explicit path is given, treat it as either a full file path or a directory.
         if (!string.IsNullOrWhiteSpace(explicitPath))
         {
             if (File.Exists(explicitPath)) return Path.GetFullPath(explicitPath);
@@ -14,6 +16,7 @@ public class FfmpegLocator : IFfmpegLocator
             throw new FileNotFoundException($"FFmpeg was not found: \"{explicitPath}\".");
         }
 
+        // Check environment variable.
         var env = Environment.GetEnvironmentVariable("OD_CONVERTER_FFMPEG");
         if (!string.IsNullOrWhiteSpace(env))
         {
@@ -22,6 +25,7 @@ public class FfmpegLocator : IFfmpegLocator
             if (File.Exists(c)) return c;
         }
 
+        // Search well-known locations relative to the application.
         var baseDir = AppContext.BaseDirectory;
         var candidates = new[]
         {
@@ -37,9 +41,11 @@ public class FfmpegLocator : IFfmpegLocator
             if (File.Exists(full)) return full;
         }
 
+        // Fallback to a legacy location.
         var legacy = Path.Combine(@"C:\ffmpeg\bin", binary);
         if (File.Exists(legacy)) return legacy;
 
+        // Finally, search the system PATH.
         var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
         foreach (var dir in pathEnv.Split(Path.PathSeparator))
         {
@@ -57,9 +63,10 @@ public class FfmpegLocator : IFfmpegLocator
             "FFmpeg was not found. Ensure tools/ffmpeg.exe is present or use --ffmpeg <path>.");
     }
 
-    /// <summary>Resolves FFprobe, preferring the sibling of an explicit FFmpeg path.</summary>
+    /// <inheritdoc />
     public string ResolveFfprobe(string? explicitFfmpegPath)
     {
+        // Prefer the ffprobe sibling of the explicitly provided ffmpeg path.
         if (!string.IsNullOrWhiteSpace(explicitFfmpegPath))
         {
             try
