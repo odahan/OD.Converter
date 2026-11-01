@@ -1,5 +1,6 @@
-﻿using OD.Converter.Commands;
+using OD.Converter.Commands;
 using OD.Converter.Services;
+using OD.Converter.Services.Modules;
 using Spectre.Console;
 
 // Set up core services
@@ -30,7 +31,12 @@ if (rawArgs.Length == 0 || ShouldRunInteractive(rawArgs))
     var interactiveConverter = new InteractiveConverter(ffmpegLocator, ffmpegConverter, ffprobeService, fileSystem, ffmpegConverter, validator);
     using var cts = new CancellationTokenSource();
     Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
-    return await interactiveConverter.RunAsync(initialInput, ffmpegOverride, cts.Token);
+    if (initialInput is not null)
+        return await interactiveConverter.RunAsync(initialInput, ffmpegOverride, cts.Token);
+    using var menuHttpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) };
+    var menuModules = new ModuleManager(new ModulePaths(), new ModuleDownloader(menuHttpClient), BuiltInModuleRecipes.Create());
+    return await new InteractiveProcessingMenu(ffmpegLocator, fileSystem, ffprobeService,
+        interactiveConverter, menuModules, AnsiConsole.Console).RunAsync(cts.Token);
 }
 
 // Parse the command name and remaining arguments
@@ -52,6 +58,40 @@ switch (cmd)
         break;
     case "formats":
         exit = await new FormatsCommand().RunAsync(rest, cts2.Token);
+        break;
+    case "process":
+        exit = await new ProcessCommand(ffmpegLocator, fileSystem, ffprobeService,
+            new AudioExtractionService(ffmpegConverter, ffmpegConverter)).RunAsync(rest, cts2.Token);
+        break;
+    case "modules":
+        using (var moduleHttpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) })
+        {
+            var moduleManager = new ModuleManager(new ModulePaths(), new ModuleDownloader(moduleHttpClient), BuiltInModuleRecipes.Create());
+            exit = await new ModulesCommand(moduleManager).RunAsync(rest, cts2.Token);
+        }
+        break;
+    case "guide":
+        if (rest.Any(value => value is "--help" or "-h" or "-?"))
+        {
+            Console.WriteLine("Usage: odconv guide [--extract]  Open the EN/FR user guide, or only extract it next to the EXE.");
+            exit = 0;
+            break;
+        }
+        if (rest.Length > 1 || (rest.Length == 1 && rest[0] != "--extract"))
+        {
+            exit = ErrorHandler.Fail("Usage: odconv guide [--extract]");
+            break;
+        }
+        try
+        {
+            var guide = new UserGuideService();
+            ConsoleTheme.Success(AnsiConsole.Console, rest.Length == 1 ? guide.Extract() : guide.Open());
+            exit = 0;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            exit = ErrorHandler.Fail($"Unable to open the guide: {ex.Message}. Keep the EXE in a writable folder; open odconv-user-guide.html manually if it was extracted.", 3);
+        }
         break;
     case "--help": case "-h": case "-?": case "help":
         PrintRootHelp(); exit = 0; break;
@@ -83,27 +123,34 @@ static bool ShouldRunInteractive(string[] a)
 
 // Checks if a string is a known subcommand
 static bool IsSubcommand(string s) =>
-    s is "convert" or "probe" or "info" or "formats" or "help" or "--help" or "-h" or "--version" or "-?";
+    s is "convert" or "probe" or "info" or "formats" or "process" or "modules" or "guide" or "help" or "--help" or "-h" or "--version" or "-?";
 
 // Prints the root help text
 static void PrintRootHelp()
 {
-    AnsiConsole.WriteLine("odconv — audio converter");
+    ConsoleTheme.Header(AnsiConsole.Console);
+    ConsoleTheme.Section(AnsiConsole.Console, "Quick start", "Run odconv without arguments for the guided menus. All commands below can also be scripted.");
     AnsiConsole.WriteLine("");
-    AnsiConsole.WriteLine("Usage :");
-    AnsiConsole.WriteLine("  odconv <file>                    Open the interactive menu");
-    AnsiConsole.WriteLine("  odconv convert <file>... --to <fmt> [options]    Convert files from the command line");
-    AnsiConsole.WriteLine("  odconv probe <f> [--json]        Show file metadata");
-    AnsiConsole.WriteLine("  odconv formats                   List supported formats");
-    AnsiConsole.WriteLine("");
-    AnsiConsole.WriteLine("Options for convert:");
+    var commands = ConsoleTheme.CreateTable("Command", "Purpose");
+    commands.AddRow("[bold]odconv[/]", "Open the guided audio/video menu");
+    commands.AddRow("odconv <file>", "Open classic interactive conversion");
+    commands.AddRow("odconv convert <file> --to <fmt>", "Convert audio files or batches");
+    commands.AddRow("odconv process --help", "Extract, separate, transcribe or combine");
+    commands.AddRow("odconv modules --help", "Install, verify, repair or remove AI modules");
+    commands.AddRow("odconv probe <file> [[--json]]", "Inspect metadata and audio streams");
+    commands.AddRow("odconv formats", "Explore supported audio formats");
+    commands.AddRow("odconv guide [[--extract]]", "Read the offline EN/FR guide in your browser");
+    commands.AddRow("odconv --version", "Show the application version");
+    AnsiConsole.Write(commands);
+    ConsoleTheme.Section(AnsiConsole.Console, "Conversion options");
+
     AnsiConsole.WriteLine("  --output-dir <dir>   Output directory (preserves structure)");
     AnsiConsole.WriteLine("  --recursive          Process subdirectories recursively");
     AnsiConsole.WriteLine("  --pattern <glob>     File pattern, e.g. \"*.wav\"");
     AnsiConsole.WriteLine("  --help               Show this help");
     AnsiConsole.WriteLine("");
-    AnsiConsole.WriteLine("Exemples :");
-    AnsiConsole.WriteLine("  odconv song.wav                  # menu interactif");
+    ConsoleTheme.Section(AnsiConsole.Console, "Examples");
+    AnsiConsole.WriteLine("  odconv song.wav                  # classic interactive conversion");
     AnsiConsole.WriteLine("  odconv convert in.wav --to mp3 --bitrate 320k -o out.mp3");
     AnsiConsole.WriteLine("  odconv convert in.flac --to ogg --quality 6 --mono");
     AnsiConsole.WriteLine("  odconv convert in.wav --to flac --compression 5");

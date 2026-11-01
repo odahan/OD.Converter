@@ -5,4 +5,11 @@
   <Folder Name="/tests/">
     <Project Path="tests/OD.Converter.Tests/OD.Converter.Tests.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/OD.Converter.PublishedAiValidation/OD.Converter.PublishedAiValidation.csproj" />
+    <Project Path="tools/OD.Converter.ReleaseValidation/OD.Converter.ReleaseValidation.csproj" />
+    <Project Path="tools/OD.Converter.TranscriptionValidation/OD.Converter.TranscriptionValidation.csproj" />
+    <Project Path="tools/OD.Converter.SeparationValidation/OD.Converter.SeparationValidation.csproj" />
+    <Project Path="tools/OD.Converter.ModuleValidation/OD.Converter.ModuleValidation.csproj" />
+  </Folder>
 </Solution>

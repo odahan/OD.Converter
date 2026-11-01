@@ -1,6 +1,10 @@
 # odconv — Audio Converter CLI (.NET 10 win-x64)
 
-Self-contained Windows x64 executable with embedded FFmpeg 8.1.2. No external dependencies.
+**Version 1.3.0** · [English / French user guide](docs/user-guide.html)
+
+Self-contained Windows x64 executable with embedded FFmpeg 8.1.2. Conversion and
+extraction work without external dependencies. Optional AI processing uses separately
+installed private CPU modules.
 
 ## License and support
 
@@ -27,10 +31,38 @@ FFmpeg is a third-party component and remains subject to its own license, includ
 
 ```powershell
 odconv song.wav          # menu: format, bitrate, mono, output
-odconv                   # prompts for source file
+odconv                   # main menu: audio/video processing and optional modules
 ```
 
 Menu flow: format selection (mp3/wav/flac/ogg/opus/aac/m4a/aiff/wma/wv/alac) → bitrate / quality / compression → mono → sample rate → output file → confirm → convert → loop "another file?"
+
+Without arguments, the main menu offers `Process audio / video`, `Convert audio (classic)`,
+`Optional modules`, `User guide / Guide utilisateur`, and `Buy me a coffee`. A shared ASCII banner,
+colored selections, numbered workflow stages and consistent tables guide navigation.
+The common workflow analyzes all audio streams, lets you select
+an absolute stream index, then offers extraction, separation, transcription, or their
+combination. Unavailable actions appear in grey with their module requirement and are
+excluded from executable choices. Choose exports, source language, audio encoding,
+destination and prefix, then review the summary. Existing destinations are listed
+together before overwrite confirmation; every destination is checked before processing.
+Processing reports steps, warnings, finalized exports and missing files after a partial
+failure. Ctrl+C cancels processing and cleans intermediate files, retaining completed exports.
+
+`Optional modules` shows offline checked states and provides `Verify`, `Install`,
+`Repair` and `Uninstall` for each module. Installation/repair shows the private location,
+version, CPU profile and download size before confirmation. Installation is always explicit.
+Passing a file directly keeps the classic conversion prompts shown above.
+
+The bilingual guide is a single, self-contained HTML document embedded in the EXE.
+The help menu (or `odconv guide`) extracts/refreshes `odconv-user-guide.html` next to
+the running executable and opens the default browser. Keep the EXE in a writable
+folder. If browser launch fails, open the extracted file manually. Use
+`odconv guide --extract` to extract it without launching a browser. No network
+connection is needed to read the guide.
+
+`Buy me a coffee` presents voluntary support for Olivier Dahan / KNHSynths, using
+the same page as HarmoTools: [buymeacoffee.com/knhsynths](https://buymeacoffee.com/knhsynths).
+Choose `Open Buy Me a Coffee` to launch your default browser, or `Back` to return.
 
 ### Command line
 
@@ -72,6 +104,36 @@ odconv --version
 
 ### Exit codes
 
+The audio/video extension includes full stream analysis in `probe` and offline
+soundtrack extraction with `process`. For example:
+
+```powershell
+odconv process "clip.mp4" --action extract --audio-track 2 --to wav --bit-depth 24
+```
+
+The stream index is the absolute index reported by `probe`. Extraction preserves
+presentation offsets and timestamp gaps, pads the soundtrack to the source
+duration and measures PCM frame counts. Sources with unknown or inconsistent
+timelines are rejected explicitly; PCM WAV uses sample zero as its origin.
+The optional module manager exposes `modules list`, `status`, `verify`, `install`,
+`repair` and targeted `uninstall`. Explicit installation provisions independent
+CPU distributions of Demucs and Whisper, including private runtimes, models,
+integrity verification and offline functional checks. Conversion/extraction do
+not download or require these modules. `process --action separate` uses the
+installed Demucs CPU module to export vocals and background, optionally the
+complete soundtrack. `process --action transcribe --language fr` produces global
+UTF-8 TXT/SRT with the private Whisper CPU module. `separate-transcribe` transcribes
+aligned Demucs vocals using both modules. Language defaults to `auto`; translation
+and speaker identification are disabled. Review the text and phrase boundaries.
+See [audio/video CLI contracts](docs/cli-audio-video.md),
+[PCM preparation policy](docs/preparation-audio.md),
+[Demucs separation and validation](docs/separation-audio.md),
+[Whisper transcription and validation](docs/transcription-audio.md),
+[optional module lifecycle](docs/modules-optionnels.md),
+[pinned distributions and licenses](docs/distributions-modules.md),
+[release validation](docs/validation-livraison.md), and
+[implementation progress](docs/suivi-audio-video.md).
+
 `0 OK`, `1 args/file`, `2 ffmpeg not found`, `3 conversion failed`, `130 cancelled Ctrl+C`
 
 ### Error messages (no logs)
@@ -87,7 +149,7 @@ Error: conversion failed (Invalid data found...). Check source file...
 
 ```powershell
 dotnet build src/OD.Converter -c Release -r win-x64 -m:1
-dotnet publish src/OD.Converter -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true -o publish
+dotnet publish src/OD.Converter -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true -m:1 -o publish
 .\publish\odconv.exe --help
 ```
 
@@ -98,6 +160,12 @@ Prerequisites: .NET SDK 10.0.400, Spectre.Console 0.49.1
 ```powershell
 dotnet test OD.Converter.slnx -c Release -m:1
 ```
+
+The standalone release validator copies only the published EXE into a new directory,
+uses a Windows-only PATH and a private bundle extraction directory, then checks video
+extraction, two-hour PCM alignment and classic conversion. It writes JSON measurements
+and command logs. This local isolation does not replace a clean Windows machine test;
+see [the release procedure and remaining checks](docs/validation-livraison.md).
 
 ## Embedded FFmpeg
 

@@ -29,9 +29,9 @@ public class InteractiveConverter
     {
         while (true)
         {
-            Console.Clear();
-            AnsiConsole.Write(new FigletText("odconv").Color(Color.Cyan1));
-            AnsiConsole.MarkupLine($"[grey]Audio conversion — version {ApplicationInfo.Version}. Leave blank and press Enter to exit.[/]");
+            ConsoleTheme.Header(AnsiConsole.Console);
+
+            ConsoleTheme.Section(AnsiConsole.Console, "Classic audio conversion", "Leave the source blank to return. Ctrl+C cancels the session.");
 
             // Prompt for source file if not provided as an argument
             string inputPath = initialInput ?? "";
@@ -72,15 +72,17 @@ public class InteractiveConverter
             }
             catch { }
 
-            if (probe is not null)
-                AnsiConsole.MarkupLine($"[grey]Source: {Markup.Escape(_ffprobeService.FormatProbeHuman(probe))} — {Markup.Escape(_fileSystem.GetFileName(inputPath))}[/]");
-            else
-                AnsiConsole.MarkupLine($"[grey]Source: {Markup.Escape(_fileSystem.GetFileName(inputPath))}[/]");
+            var sourceDescription = probe is not null
+                ? $"{_fileSystem.GetFileName(inputPath)}{Environment.NewLine}{_ffprobeService.FormatProbeHuman(probe)}"
+                : _fileSystem.GetFileName(inputPath);
+            AnsiConsole.Write(new Panel(new Text(sourceDescription))
+                .Header("[bold cyan1]Source[/]").Border(BoxBorder.Rounded).BorderColor(Color.Grey));
 
-            // Select target format
+            ConsoleTheme.Section(AnsiConsole.Console, "1 / Format & audio settings");
             var format = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
+                new SelectionPrompt<string>().HighlightStyle(ConsoleTheme.SelectionStyle).PageSize(12)
                     .Title("Target format:")
+                    .UseConverter(key => $"[bold]{Markup.Escape(key.ToUpperInvariant())}[/]  [grey]{Markup.Escape(FormatRegistry.Get(key)!.Description)}[/]")
                     .AddChoices(FormatRegistry.All.Select(f => f.Key).ToArray()));
 
             var fmtInfo = FormatRegistry.Get(format)!;
@@ -96,7 +98,7 @@ public class InteractiveConverter
                 if (format == "mp3")
                 {
                     var brChoice = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
+                        new SelectionPrompt<string>().HighlightStyle(ConsoleTheme.SelectionStyle).PageSize(12)
                             .Title("MP3 bitrate:")
                             .AddChoices(new[] { "320k (recommended)", "256k", "192k", "128k", "VBR q0 (highest quality)", "VBR q2" }));
                     if (brChoice.Contains("VBR q0")) quality = 0;
@@ -106,7 +108,7 @@ public class InteractiveConverter
                 else if (format == "ogg")
                 {
                     var qChoice = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
+                        new SelectionPrompt<string>().HighlightStyle(ConsoleTheme.SelectionStyle).PageSize(12)
                             .Title("Ogg Vorbis quality (0-10):")
                             .AddChoices(new[] { "6 (~192k, recommended)", "8 (~256k)", "4 (~128k)", "10 (maximum)", "2 (low)" }));
                     var qStr = qChoice.Split(' ')[0];
@@ -115,15 +117,15 @@ public class InteractiveConverter
                 else if (format == "opus")
                 {
                     bitrate = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
-                            .Title("Bitrate Opus :")
+                        new SelectionPrompt<string>().HighlightStyle(ConsoleTheme.SelectionStyle).PageSize(12)
+                            .Title("Opus bitrate:")
                             .AddChoices(new[] { "128k (recommended)", "96k", "64k", "192k", "256k" })
                     ).Split(' ')[0];
                 }
                 else
                 {
                     bitrate = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
+                        new SelectionPrompt<string>().HighlightStyle(ConsoleTheme.SelectionStyle).PageSize(12)
                             .Title($"{format} bitrate:")
                             .AddChoices(new[] { "192k (recommended)", "128k", "256k", "320k" })
                     ).Split(' ')[0];
@@ -135,7 +137,7 @@ public class InteractiveConverter
                 if (format == "flac")
                 {
                     compression = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
+                        new SelectionPrompt<string>().HighlightStyle(ConsoleTheme.SelectionStyle).PageSize(12)
                             .Title("FLAC compression (0-8):")
                             .AddChoices(new[] { "5 (recommended)", "8 (maximum)", "0 (fast)", "3" })
                     ).Split(' ')[0] is var s && int.TryParse(s, out var lv) ? lv : 5;
@@ -143,7 +145,7 @@ public class InteractiveConverter
                 if (format == "wav" || format == "aiff")
                 {
                     var bd = AnsiConsole.Prompt(
-                        new SelectionPrompt<string>()
+                        new SelectionPrompt<string>().HighlightStyle(ConsoleTheme.SelectionStyle).PageSize(12)
                         .Title("Bit depth:")
                         .AddChoices(new[] { "16-bit (recommended)", "24-bit", "32-bit" }));
                     bitDepth = bd.StartsWith("24") ? 24 : bd.StartsWith("32") ? 32 : 16;
@@ -157,19 +159,19 @@ public class InteractiveConverter
             if (!keepSr)
             {
                 var srChoice = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
+                    new SelectionPrompt<string>().HighlightStyle(ConsoleTheme.SelectionStyle).PageSize(12)
                         .Title("Sample rate:")
                         .AddChoices(new[] { "44100", "48000", "22050", "96000" }));
                 sampleRate = int.Parse(srChoice);
             }
 
-            // Suggest a default output filename
+            ConsoleTheme.Section(AnsiConsole.Console, "2 / Destination");
             var defaultOut = mono
                 ? FormatRegistry.DefaultOutputPathMono(inputPath, format)
                 : FormatRegistry.DefaultOutputPath(inputPath, format);
 
             var outputPath = AnsiConsole.Prompt(
-                new TextPrompt<string>($"Output file [[default {Path.GetFileName(defaultOut)}]]:")
+                new TextPrompt<string>("Output file:").WithConverter(Markup.Escape)
                     .AllowEmpty()
                     .DefaultValue(defaultOut));
 
@@ -180,7 +182,7 @@ public class InteractiveConverter
             // Check for existing file
             if (_fileSystem.FileExists(outputPath))
             {
-                var ow = AnsiConsole.Confirm($"The file already exists: \"{Path.GetFileName(outputPath)}\". Overwrite?", false);
+                var ow = AnsiConsole.Confirm($"The file already exists: \"{Markup.Escape(Path.GetFileName(outputPath))}\". Overwrite?", false);
                 if (!ow)
                 {
                     initialInput = inputPath;
@@ -188,9 +190,9 @@ public class InteractiveConverter
                 }
             }
 
-            // Show summary table
-            var table = new Table().Border(TableBorder.Rounded);
-            table.AddColumn("Option"); table.AddColumn("Value");
+            ConsoleTheme.Section(AnsiConsole.Console, "3 / Review & start");
+            var table = ConsoleTheme.CreateTable("Option", "Value");
+
             table.AddRow("Source", Markup.Escape(inputPath));
             table.AddRow("Target", $"{format} → {Markup.Escape(outputPath)}");
             if (bitrate != null) table.AddRow("Bitrate", bitrate);
@@ -253,9 +255,12 @@ public class InteractiveConverter
             catch (Exception ex) { ErrorHandler.FailInteractive(ex.Message); continue; }
 
             // Run conversion
-            AnsiConsole.MarkupLine("[grey]Conversion in progress...[/]");
             (int code, string stderr) conversionResult;
-            try { conversionResult = await _ffmpegRunner.RunAsync(ffmpeg, args, ct); }
+            try
+            {
+                conversionResult = await AnsiConsole.Status().Spinner(Spinner.Known.Dots)
+                    .StartAsync("[cyan1]Converting audio…[/]", _ => _ffmpegRunner.RunAsync(ffmpeg, args, ct));
+            }
             catch (OperationCanceledException)
             {
                 AnsiConsole.MarkupLine("[yellow]Conversion cancelled.[/]");

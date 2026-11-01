@@ -19,15 +19,16 @@ public class FormatsCommand
             ErrorHandler.Fail($"Unknown argument: \"{args[0]}\". Usage: odconv formats");
             return Task.FromResult(1);
         }
-        var table = new Table().Border(TableBorder.Rounded);
-        table.AddColumn("Format"); table.AddColumn("Ext"); table.AddColumn("Codec"); table.AddColumn("Type"); table.AddColumn("Description"); table.AddColumn("Default");
+        ConsoleTheme.Section(AnsiConsole.Console, "Supported audio formats");
+        var table = ConsoleTheme.CreateTable("Format", "Ext", "Codec", "Type", "Description", "Default");
+
         foreach (var f in FormatRegistry.All)
         {
             table.AddRow(
                 Markup.Escape(f.Key),
                 Markup.Escape(f.Extension),
                 Markup.Escape(f.Codec),
-                f.IsLossless ? "lossless" : "lossy",
+                f.IsLossless ? "[green]lossless[/]" : "[yellow]lossy[/]",
                 Markup.Escape(f.Description),
                 Markup.Escape(string.IsNullOrEmpty(f.DefaultBitrate) ? "-" : f.DefaultBitrate));
         }

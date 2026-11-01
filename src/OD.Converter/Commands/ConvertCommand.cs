@@ -207,6 +207,7 @@ public class ConvertCommand
     /// <summary>Prints help for the conversion command.</summary>
     public static void PrintHelp()
     {
+        ConsoleTheme.Section(AnsiConsole.Console, "Audio conversion / command reference");
         AnsiConsole.WriteLine("Usage: odconv convert <file>... --to <format> [options]");
         AnsiConsole.WriteLine("       Supports multiple files and directories (use with --recursive and --pattern).");
         AnsiConsole.WriteLine("\nFormats: " + FormatRegistry.SupportedList + "\n\nOptions:");

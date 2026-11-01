@@ -1,7 +1,7 @@
 namespace OD.Converter.Services;
 
 /// <summary>
-/// Provides audio probing capabilities using FFprobe.
+/// Provides audio and video source metadata using FFprobe.
 /// </summary>
 public interface IFfprobeService
 {

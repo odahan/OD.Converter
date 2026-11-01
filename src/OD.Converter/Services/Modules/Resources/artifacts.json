@@ -1,0 +1,440 @@
+{
+  "Bootstrap": [
+    {
+      "Url": "https://files.pythonhosted.org/packages/29/a2/d40fb2460e883eca5199c62cfc2463fd261f760556ae6290f88488c362c0/pip-25.1.1-py3-none-any.whl",
+      "IsZip": true,
+      "Destination": "runtime/Lib/site-packages",
+      "Name": "pip",
+      "Version": "25.1.1",
+      "SizeBytes": 1825227,
+      "License": "MIT",
+      "Sha256": "2913a38a2abf4ea6b64ab507bd9e967f3b53dc1ede74b01b0931e1ce548751af"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl",
+      "IsZip": true,
+      "Destination": "runtime/Lib/site-packages",
+      "Name": "setuptools",
+      "Version": "80.9.0",
+      "SizeBytes": 1201486,
+      "License": "MIT",
+      "Sha256": "062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/0b/2c/87f3254fd8ffd29e4c02732eee68a83a1d3c346ae39bc6822dcbcb697f2b/wheel-0.45.1-py3-none-any.whl",
+      "IsZip": true,
+      "Destination": "runtime/Lib/site-packages",
+      "Name": "wheel",
+      "Version": "0.45.1",
+      "SizeBytes": 72494,
+      "License": "MIT",
+      "Sha256": "708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl",
+      "IsZip": true,
+      "Destination": "runtime/Lib/site-packages",
+      "Name": "packaging",
+      "Version": "25.0",
+      "SizeBytes": 66469,
+      "License": "Apache-2.0 OR BSD-2-Clause",
+      "Sha256": "29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484"
+    }
+  ],
+  "Packages": [
+    {
+      "Url": "https://files.pythonhosted.org/packages/87/38/55f835ebd9f443465087a6954ede19d4a41aebdf5e28567e89b99d6d2f57/demucs-4.0.1.tar.gz",
+      "IsZip": false,
+      "Destination": "packages/demucs-4.0.1.tar.gz",
+      "Name": "demucs",
+      "Version": "4.0.1",
+      "SizeBytes": 1212924,
+      "License": "MIT License",
+      "Sha256": "e45a5a788bae79767c37bbf6e69aae03862ddcca05550fb79b926346a177d713"
+    },
+    {
+      "Url": "https://download-r2.pytorch.org/whl/cpu/torch-2.6.0%2Bcpu-cp311-cp311-win_amd64.whl",
+      "IsZip": false,
+      "Destination": "packages/torch-2.6.0+cpu-cp311-cp311-win_amd64.whl",
+      "Name": "torch",
+      "Version": "2.6.0+cpu",
+      "SizeBytes": 206540444,
+      "License": "BSD-3-Clause",
+      "Sha256": "24c9d3d13b9ea769dd7bd5c11cfa1fc463fd7391397156565484565ca685d908"
+    },
+    {
+      "Url": "https://download-r2.pytorch.org/whl/cpu/torchaudio-2.6.0%2Bcpu-cp311-cp311-win_amd64.whl",
+      "IsZip": false,
+      "Destination": "packages/torchaudio-2.6.0+cpu-cp311-cp311-win_amd64.whl",
+      "Name": "torchaudio",
+      "Version": "2.6.0+cpu",
+      "SizeBytes": 2444371,
+      "License": "BSD-2-Clause",
+      "Sha256": "79cd153330c071cb9582351c1f3c3c55a1adbf85556bfc5d521b744c7280728f"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/3f/6b/5610004206cf7f8e7ad91c5a85a8c71b2f2f8051a0c0c4d5916b76d6cbb2/numpy-1.26.4-cp311-cp311-win_amd64.whl",
+      "IsZip": false,
+      "Destination": "packages/numpy-1.26.4-cp311-cp311-win_amd64.whl",
+      "Name": "numpy",
+      "Version": "1.26.4",
+      "SizeBytes": 15811913,
+      "License": "BSD-3-Clause (bundled-library notices retained)",
+      "Sha256": "cd25bcecc4974d09257ffcd1f098ee778f7834c3ad767fe5db785be9a4aa9cb2"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/14/e9/6b761de83277f2f02ded7e7ea6f07828ec78e4b229b80e4ca55dd205b9dc/soundfile-0.13.1-py2.py3-none-win_amd64.whl",
+      "IsZip": false,
+      "Destination": "packages/soundfile-0.13.1-py2.py3-none-win_amd64.whl",
+      "Name": "soundfile",
+      "Version": "0.13.1",
+      "SizeBytes": 1019162,
+      "License": "BSD-3-Clause (bundled libsndfile: LGPL-2.1-or-later)",
+      "Sha256": "1e70a05a0626524a69e9f0f4dd2ec174b4e9567f4d8b6c11d38b5c289be36ee9"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/b2/fe/81695a1aa331a842b582453b605175f419fe8540355886031328089d840a/sympy-1.13.1-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/sympy-1.13.1-py3-none-any.whl",
+      "Name": "sympy",
+      "Version": "1.13.1",
+      "SizeBytes": 6189177,
+      "License": "BSD",
+      "Sha256": "db36cdc64bf61b9b24578b6f7bab1ecdd2452cf008f34faa33776680c26d66f8"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/43/e3/7d92a15f894aa0c9c4b49b8ee9ac9850d6e63b03c9c32c0367a13ae62209/mpmath-1.3.0-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/mpmath-1.3.0-py3-none-any.whl",
+      "Name": "mpmath",
+      "Version": "1.3.0",
+      "SizeBytes": 536198,
+      "License": "BSD",
+      "Sha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/73/c0/77ba02423c2f7d7091143c45cd49e0e6575c4c1967394bb542bd923a9b74/cffi-2.1.1-cp311-cp311-win_amd64.whl",
+      "IsZip": false,
+      "Destination": "packages/cffi-2.1.1-cp311-cp311-win_amd64.whl",
+      "Name": "cffi",
+      "Version": "2.1.1",
+      "SizeBytes": 185096,
+      "License": "MIT-0",
+      "Sha256": "42f6930c31dc7f50732c9ae793c2786c7b6b044195967bbdde40bb9be81c4cc0"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/86/43/efdb0bcb07c47826fa55857cec0deb743f74cd83b6ba5ec9e413505a72e6/julius-0.2.8-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/julius-0.2.8-py3-none-any.whl",
+      "Name": "julius",
+      "Version": "0.2.8",
+      "SizeBytes": 21819,
+      "License": "MIT License",
+      "Sha256": "6891235cbc355e629d839f87489bff8ca46e57a0e7cc35abb909c7a2aa538c25"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/d1/50/0d1684093978b8243c74b54093a90f38f83dd7af30bc9bfa45e202216791/lameenc-1.9.0-cp311-cp311-win_amd64.whl",
+      "IsZip": false,
+      "Destination": "packages/lameenc-1.9.0-cp311-cp311-win_amd64.whl",
+      "Name": "lameenc",
+      "Version": "1.9.0",
+      "SizeBytes": 119516,
+      "License": "LGPL-3.0-or-later",
+      "Sha256": "92029dcfe07a8a014360548ddf45c18549139c02a3483253d2ba45d247a2a33e"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/typing_extensions-4.16.0-py3-none-any.whl",
+      "Name": "typing_extensions",
+      "Version": "4.16.0",
+      "SizeBytes": 45571,
+      "License": "PSF-2.0",
+      "Sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/a2/80/0929bff2e33154d92d16ca7af918aca81ed86ba063f133a35e87640f1f65/dora_search-0.1.13-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/dora_search-0.1.13-py3-none-any.whl",
+      "Name": "dora_search",
+      "Version": "0.1.13",
+      "SizeBytes": 73400,
+      "License": "MIT",
+      "Sha256": "2b440ab095d3dd715367bf680e64c94d9abe1a3950006224badecad9ff8240a5"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/2a/09/f8d8f8f31e4483c10a906437b4ce31bdf3d6d417b73fe33f1a8b59e34228/einops-0.8.2-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/einops-0.8.2-py3-none-any.whl",
+      "Name": "einops",
+      "Version": "0.8.2",
+      "SizeBytes": 65638,
+      "License": "MIT",
+      "Sha256": "54058201ac7087911181bfec4af6091bb59380360f069276601256a76af08193"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/b7/8d/3f849fcb79359259737bc2d8ddcaee6149ffb773239a260c9ff20179736f/filelock-4.2.6-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/filelock-4.2.6-py3-none-any.whl",
+      "Name": "filelock",
+      "Version": "4.2.6",
+      "SizeBytes": 164378,
+      "License": "MIT",
+      "Sha256": "fd7d4fca497bf3e3d0945a13261f8e684f2aef12ce7cf76aef26e13bf7388b88"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/6c/c0/a98505f18594f1bce828bb159cec0fcf9860562f1a2c85913409fc8f3d9e/fsspec-2026.9.0-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/fsspec-2026.9.0-py3-none-any.whl",
+      "Name": "fsspec",
+      "Version": "2026.9.0",
+      "SizeBytes": 221738,
+      "License": "BSD-3-Clause",
+      "Sha256": "8dd6e646e99ea382bd85f97a45e6b526a442d79423a7dc673f1e2756d05fcb5f"
+    },
+    {
+      "Url": "https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/jinja2-3.1.6-py3-none-any.whl",
+      "Name": "Jinja2",
+      "Version": "3.1.6",
+      "SizeBytes": 134899,
+      "License": "BSD-3-Clause",
+      "Sha256": "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/91/89/f2b509f7bf79352e40117824c1070dbeafd4df67031d3fa98165a3134228/markupsafe-3.0.4-cp311-cp311-win_amd64.whl",
+      "IsZip": false,
+      "Destination": "packages/markupsafe-3.0.4-cp311-cp311-win_amd64.whl",
+      "Name": "MarkupSafe",
+      "Version": "3.0.4",
+      "SizeBytes": 14328,
+      "License": "BSD-3-Clause",
+      "Sha256": "fdb4ca07ab75ffadab4a8b135ad59cdbb3156b99310f3d565370da74a15d6bd3"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/networkx-3.6.1-py3-none-any.whl",
+      "Name": "networkx",
+      "Version": "3.6.1",
+      "SizeBytes": 2068504,
+      "License": "BSD-3-Clause",
+      "Sha256": "d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/4f/bd/0d9f8247b0819385213d09564eda5c52d3673313c2414d51f72883ec24cd/omegaconf-2.4.0-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/omegaconf-2.4.0-py3-none-any.whl",
+      "Name": "omegaconf",
+      "Version": "2.4.0",
+      "SizeBytes": 254152,
+      "License": "BSD-3-Clause (ANTLR attribution retained)",
+      "Sha256": "f141a664c777582405e3cc6e0545ecc79429e79f844995b1a6e71c35946a025c"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/da/e3/ea007450a105ae919a72393cb06f122f288ef60bba2dc64b26e2646fa315/pyyaml-6.0.3-cp311-cp311-win_amd64.whl",
+      "IsZip": false,
+      "Destination": "packages/pyyaml-6.0.3-cp311-cp311-win_amd64.whl",
+      "Name": "PyYAML",
+      "Version": "6.0.3",
+      "SizeBytes": 158763,
+      "License": "MIT",
+      "Sha256": "9f3bfb4965eb874431221a3ff3fdcddc7e74e3b07799e0e84ca4a0f867d449bf"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/43/37/320afd9458abb186f09a5183f36e48829df7151821bf887f272a63b2584d/openunmix-1.3.0-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/openunmix-1.3.0-py3-none-any.whl",
+      "Name": "openunmix",
+      "Version": "1.3.0",
+      "SizeBytes": 40047,
+      "License": "MIT",
+      "Sha256": "e893ae22c5b8001a6107022499c2587b70d5c2e4777cc7c9ed6272b68a69534e"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/pycparser-3.12-py3-none-any.whl",
+      "Name": "pycparser",
+      "Version": "3.12",
+      "SizeBytes": 62600,
+      "License": "BSD-3-Clause",
+      "Sha256": "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/67/f3/6cd296376653270ac1b423bb30bd70942d9916b6978c6f40472d6ac038e7/retrying-1.4.2-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/retrying-1.4.2-py3-none-any.whl",
+      "Name": "retrying",
+      "Version": "1.4.2",
+      "SizeBytes": 10859,
+      "License": "Apache-2.0",
+      "Sha256": "bbc004aeb542a74f3569aeddf42a2516efefcdaff90df0eb38fbfbf19f179f59"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/ea/bb/711e1c2ebd18a21202c972dd5d5c8e09a921f2d3560e3a53d6350c808ab7/submitit-1.5.4-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/submitit-1.5.4-py3-none-any.whl",
+      "Name": "submitit",
+      "Version": "1.5.4",
+      "SizeBytes": 76043,
+      "License": "MIT",
+      "Sha256": "c26f3a7c8d4150eaf70b1da71e2023e9e9936c93e8342ed7db910f29158561c5"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/cloudpickle-3.1.2-py3-none-any.whl",
+      "Name": "cloudpickle",
+      "Version": "3.1.2",
+      "SizeBytes": 22228,
+      "License": "BSD-3-Clause",
+      "Sha256": "9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/a7/03/921a3d3c75785aca9ebfbfcabfbc3a1be12e2ab5265deb026d55a5a3f83e/tqdm-4.70.1-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/tqdm-4.70.1-py3-none-any.whl",
+      "Name": "tqdm",
+      "Version": "4.70.1",
+      "SizeBytes": 80199,
+      "License": "MPL-2.0 AND MIT",
+      "Sha256": "c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73"
+    },
+    {
+      "Url": "https://download.pytorch.org/whl/colorama-0.4.6-py2.py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/colorama-0.4.6-py2.py3-none-any.whl",
+      "Name": "colorama",
+      "Version": "0.4.6",
+      "SizeBytes": 25335,
+      "License": "BSD-3-Clause",
+      "Sha256": "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+    },
+    {
+      "Url": "https://files.pythonhosted.org/packages/e4/16/dd00f9fc5b84cb3fb396d62245e11761accfd9d27fd56ce0024bdd38a0ae/treetable-0.2.6-py3-none-any.whl",
+      "IsZip": false,
+      "Destination": "packages/treetable-0.2.6-py3-none-any.whl",
+      "Name": "treetable",
+      "Version": "0.2.6",
+      "SizeBytes": 7379,
+      "License": "Unlicense license",
+      "Sha256": "fa7dfa0297d2bbc5882191edd2e15f79a5e883e352f489e2acadb221db565adf"
+    }
+  ],
+  "Engines": [
+    {
+      "Name": "WhisperVadModel",
+      "Version": "silero-v5.1.2-9ffd54a1e1ee413ddf265af9913beaf518d1639b",
+      "Url": "https://huggingface.co/ggml-org/whisper-vad/resolve/9ffd54a1e1ee413ddf265af9913beaf518d1639b/ggml-silero-v5.1.2.bin",
+      "Sha256": "29940d98d42b91fbd05ce489f3ecf7c72f0a42f027e4875919a28fb4c04ea2cf",
+      "SizeBytes": 885098,
+      "Destination": "models/ggml-silero-v5.1.2.bin",
+      "IsZip": false,
+      "License": "MIT"
+    },
+    {
+      "Name": "WhisperVadLicense",
+      "Version": "silero-066409f3d9db45a30d21dfcbf9147826ffdd7052",
+      "Url": "https://raw.githubusercontent.com/snakers4/silero-vad/066409f3d9db45a30d21dfcbf9147826ffdd7052/LICENSE",
+      "Sha256": "2e63e9a38b6e8fc0c7bc37ce174caca1862870856c6daf5697cfb785e925520b",
+      "SizeBytes": 1075,
+      "Destination": "licenses/silero-vad-LICENSE",
+      "IsZip": false,
+      "License": "MIT"
+    },
+    {
+      "Url": "https://github.com/ggml-org/whisper.cpp/releases/download/v1.8.2/whisper-bin-x64.zip",
+      "IsZip": true,
+      "Destination": "runtime",
+      "Name": "Whisper",
+      "Version": "1.8.2",
+      "SizeBytes": 3832432,
+      "License": "MIT",
+      "Sha256": "b1514ebc099765e39fa37eb780b92a140a94c86bb0b3b3d98226b38825979732"
+    },
+    {
+      "Url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-large-v3-turbo-q5_0.bin",
+      "IsZip": false,
+      "Destination": "models/ggml-large-v3-turbo-q5_0.bin",
+      "Name": "WhisperModel",
+      "Version": "large-v3-turbo-q5_0",
+      "SizeBytes": 574041195,
+      "License": "MIT",
+      "Sha256": "394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2"
+    },
+    {
+      "Url": "https://raw.githubusercontent.com/ggml-org/whisper.cpp/v1.8.2/LICENSE",
+      "IsZip": false,
+      "Destination": "licenses/whisper.cpp-LICENSE",
+      "Name": "WhisperLicense",
+      "Version": "1.8.2",
+      "SizeBytes": 1078,
+      "License": "MIT",
+      "Sha256": "e562a2ddfaf8280537795ac5ecd34e3012b6582a147ef69ba6a6a5c08c84757d"
+    },
+    {
+      "Url": "https://raw.githubusercontent.com/openai/whisper/v20250625/LICENSE",
+      "IsZip": false,
+      "Destination": "licenses/whisper-model-LICENSE",
+      "Name": "WhisperModelLicense",
+      "Version": "v20250625",
+      "SizeBytes": 1063,
+      "License": "MIT",
+      "Sha256": "b5d65a59060e68c4ff940e1eddfa6f94b2d68fdf58ed7f4dd57721c997e35e9d"
+    },
+    {
+      "Url": "https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th",
+      "IsZip": false,
+      "Destination": "models/955717e8-8726e21a.th",
+      "Name": "DemucsModel",
+      "Version": "htdemucs-955717e8",
+      "SizeBytes": 84141911,
+      "License": "MIT",
+      "Sha256": "8726e21a993978c7ba086d3872e7608d7d5bfca646ca4aca459ffda844faa8b4"
+    },
+    {
+      "Url": "https://raw.githubusercontent.com/facebookresearch/demucs/v4.0.1/LICENSE",
+      "IsZip": false,
+      "Destination": "licenses/demucs-LICENSE",
+      "Name": "DemucsLicense",
+      "Version": "4.0.1",
+      "SizeBytes": 1087,
+      "License": "MIT",
+      "Sha256": "cf9b17822d1fcd4ff32ccbe14183386fb3adf6f2ff92dc184130823f7fc28173"
+    }
+  ],
+  "Common": [
+    {
+      "Url": "https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip",
+      "IsZip": true,
+      "Destination": "runtime",
+      "Name": "CPython",
+      "Version": "3.11.9",
+      "SizeBytes": 11249023,
+      "License": "PSF-2.0",
+      "Sha256": "009d6bf7e3b2ddca3d784fa09f90fe54336d5b60f0e0f305c37f400bf83cfd3b"
+    },
+    {
+      "Url": "https://download.visualstudio.microsoft.com/download/pr/45d3b8dd-bced-4b37-9974-142f748d710c/4aaf54db0bfc9435f7c3660e1a00237a4b556042bfeea64bde44c2e0194e6ee5/Microsoft.VC.14.44.17.14.CRT.Redist.X64.base.vsix",
+      "IsZip": false,
+      "Destination": "packages/vc-runtime.zip",
+      "Name": "VisualCpp",
+      "Version": "14.44.35211",
+      "SizeBytes": 3224191,
+      "License": "Microsoft Visual C++ Runtime 2015-2022",
+      "Sha256": "4aaf54db0bfc9435f7c3660e1a00237a4b556042bfeea64bde44c2e0194e6ee5"
+    },
+    {
+      "Url": "https://visualstudio.microsoft.com/wp-content/uploads/2021/09/Visual-C-Runtime-2015-2022-License-1.docx",
+      "IsZip": false,
+      "Destination": "licenses/visual-c-runtime.docx",
+      "Name": "VisualCppLicense",
+      "Version": "2021-09",
+      "SizeBytes": 39644,
+      "License": "Microsoft Visual C++ Runtime 2015-2022",
+      "Sha256": "f1e3d56ceb2ad68aae0711b910375009e651ac5530fa0760f0dea6e81e54fae1"
+    }
+  ]
+}

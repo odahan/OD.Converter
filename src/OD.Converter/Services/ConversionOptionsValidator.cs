@@ -13,6 +13,10 @@ public partial class ConversionOptionsValidator : IConversionOptionsValidator
     private static readonly HashSet<int> SupportedChannels = [1, 2, 6];
     private static readonly HashSet<int> SupportedBitDepths = [16, 24, 32];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConversionOptionsValidator"/> class.
+    /// </summary>
+    /// <param name="fileSystem">The file system abstraction for path operations.</param>
     public ConversionOptionsValidator(IFileSystem fileSystem)
     {
         _fileSystem = fileSystem;

@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using System.Text.Json;
+using OD.Converter.Models;
 
 namespace OD.Converter.Services;
 
 /// <summary>
-/// Audio metadata returned by FFprobe.
+/// Legacy audio summary and complete source metadata returned by FFprobe.
 /// </summary>
 /// <param name="FormatName">Container format name.</param>
 /// <param name="CodecName">Audio codec name.</param>
@@ -22,10 +23,14 @@ public sealed record ProbeInfo(
     int BitsPerSample,
     double DurationSeconds,
     long BitRate,
-    string RawJson);
+    string RawJson)
+{
+    /// <summary>Gets the complete source metadata; legacy callers may omit this value.</summary>
+    public MediaSource? Source { get; init; }
+}
 
 /// <summary>
-/// Service that invokes FFprobe to extract audio metadata.
+/// Service that invokes FFprobe to extract audio and video source metadata.
 /// </summary>
 public class FfprobeService : IFfprobeService
 {
@@ -59,49 +64,31 @@ public class FfprobeService : IFfprobeService
         {
             try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
         });
-        var stdout = await proc.StandardOutput.ReadToEndAsync(ct);
-        var stderr = await proc.StandardError.ReadToEndAsync(ct);
+        var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+        var stderrTask = proc.StandardError.ReadToEndAsync(ct);
         await proc.WaitForExitAsync(ct);
-
+        var stdout = await stdoutTask;
+        var stderr = await stderrTask;
         if (proc.ExitCode != 0)
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(stderr) ? stdout : stderr);
 
-        using var doc = JsonDocument.Parse(stdout);
-        var root = doc.RootElement;
-
-        // Extract format-level information
-        var formatName = root.TryGetProperty("format", out var fmt) && fmt.TryGetProperty("format_name", out var fn) ? fn.GetString() ?? "" : "";
-        var duration = fmt.TryGetProperty("duration", out var d) && double.TryParse(d.GetString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var dd) ? dd : 0;
-        var bitRate = fmt.TryGetProperty("bit_rate", out var br) && long.TryParse(br.GetString(), out var brr) ? brr : 0;
-
-        // Locate the first audio stream
-        string codec = "";
-        int sr = 0, ch = 0, bps = 0;
-        if (root.TryGetProperty("streams", out var streams) && streams.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var s in streams.EnumerateArray())
-            {
-                if (s.TryGetProperty("codec_type", out var ct2) && ct2.GetString() == "audio")
-                {
-                    codec = s.TryGetProperty("codec_name", out var cn) ? cn.GetString() ?? "" : "";
-                    sr = s.TryGetProperty("sample_rate", out var srr) && int.TryParse(srr.GetString(), out var sri) ? sri : sr;
-                    ch = s.TryGetProperty("channels", out var chh) ? chh.GetInt32() : ch;
-                    bps = s.TryGetProperty("bits_per_sample", out var bpp) ? bpp.GetInt32() : bps;
-                    if (bps == 0 && s.TryGetProperty("bits_per_raw_sample", out var bpr)) bps = int.TryParse(bpr.GetString(), out var v) ? v : bps;
-                    break;
-                }
-            }
-        }
-
-        return new ProbeInfo(formatName, codec, sr, ch, bps, duration, bitRate, stdout);
+        var source = MediaProbeParser.Parse(stdout);
+        var first = source.AudioTracks.FirstOrDefault();
+        using var document = JsonDocument.Parse(stdout);
+        var bitRate = document.RootElement.TryGetProperty("format", out var format)
+            && format.TryGetProperty("bit_rate", out var rate) && long.TryParse(rate.ToString(), out var parsedRate) ? parsedRate : 0;
+        return new ProbeInfo(source.FormatName, first?.CodecName ?? "", first?.SampleRate ?? 0,
+            first?.Channels ?? 0, first?.BitsPerSample ?? 0, source.Timeline.TargetDurationSeconds ?? 0,
+            bitRate, stdout) { Source = source };
     }
 
     /// <inheritdoc />
     public string FormatProbeHuman(ProbeInfo p)
     {
-        var dur = TimeSpan.FromSeconds(p.DurationSeconds);
+        var dur = TimeSpan.FromSeconds(Math.Min(p.DurationSeconds, TimeSpan.MaxValue.TotalSeconds / 2));
         var durStr = dur.TotalHours >= 1 ? dur.ToString(@"h\:mm\:ss") : dur.ToString(@"m\:ss");
-        var chStr = p.Channels == 1 ? "mono" : p.Channels == 2 ? "stéréo" : $"{p.Channels} canaux";
+        if (p.Source is not null && p.Source.Timeline.TargetDurationSeconds is null) durStr = "unknown duration";
+        var chStr = p.Channels == 1 ? "mono" : p.Channels == 2 ? "stereo" : $"{p.Channels} channels";
         var srStr = p.SampleRate > 0 ? $"{p.SampleRate / 1000.0:0.#} kHz" : "?";
         var bpsStr = p.BitsPerSample > 0 ? $"{p.BitsPerSample} bit" : "";
         return $"{p.CodecName} {srStr} {chStr} {bpsStr} {durStr}".Trim();

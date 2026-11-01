@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/odahan/OD.Converter</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/odahan/OD.Converter</PackageProjectUrl>
-    <Version>1.2.1</Version>
+    <Version>1.3.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishSingleFile>true</PublishSingleFile>
@@ -29,6 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\..\docs\user-guide.html" LogicalName="OD.Converter.UserGuide.html" />
+    <EmbeddedResource Include="Services\Modules\Resources\*" />
     <PackageReference Include="Spectre.Console" Version="0.49.1" />
   </ItemGroup>
 

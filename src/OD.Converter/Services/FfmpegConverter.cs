@@ -10,6 +10,10 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
 {
     private readonly IConversionOptionsValidator _validator;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FfmpegConverter"/> class.
+    /// </summary>
+    /// <param name="validator">The validator used to ensure conversion options are correct before building arguments.</param>
     public FfmpegConverter(IConversionOptionsValidator validator)
     {
         _validator = validator;
