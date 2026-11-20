@@ -1,6 +1,6 @@
 # odconv — Audio Converter CLI (.NET 10 win-x64)
 
-**Version 1.3.0** · [English / French user guide](docs/user-guide.html)
+**Version 1.3.1** · [English / French user guide](docs/user-guide.html)
 
 Self-contained Windows x64 executable with embedded FFmpeg 8.1.2. Conversion and
 extraction work without external dependencies. Optional AI processing uses separately
@@ -146,6 +146,8 @@ Error: conversion failed (Invalid data found...). Check source file...
 ```
 
 ## Build
+
+Double-click `publish.bat` in Windows Explorer to run `build.ps1` and create `publish/odconv.exe`.
 
 ```powershell
 dotnet build src/OD.Converter -c Release -r win-x64 -m:1

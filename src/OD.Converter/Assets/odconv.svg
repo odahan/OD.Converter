@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">OD.Converter</title>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="#537783"/>
+  <rect x="4" y="4" width="56" height="56" rx="13" fill="#102D3B"/>
+  <path d="M13 32 L19 32 L24 20 L31.5 44 L37.5 32 L51 32 M43 24 L51 32 L43 40" fill="none" stroke="#72E6DF"
+        stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
