@@ -34,7 +34,7 @@ if (rawArgs.Length == 0 || ShouldRunInteractive(rawArgs))
     if (initialInput is not null)
         return await interactiveConverter.RunAsync(initialInput, ffmpegOverride, cts.Token);
     using var menuHttpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) };
-    var menuModules = new ModuleManager(new ModulePaths(), new ModuleDownloader(menuHttpClient), BuiltInModuleRecipes.Create());
+    var menuModules = new ModuleManager(new ModulePaths(), new ModuleDownloader(menuHttpClient), BuiltInModuleRecipes.Create(), new ConsoleMediaProgress());
     return await new InteractiveProcessingMenu(ffmpegLocator, fileSystem, ffprobeService,
         interactiveConverter, menuModules, AnsiConsole.Console).RunAsync(cts.Token);
 }
@@ -60,13 +60,12 @@ switch (cmd)
         exit = await new FormatsCommand().RunAsync(rest, cts2.Token);
         break;
     case "process":
-        exit = await new ProcessCommand(ffmpegLocator, fileSystem, ffprobeService,
-            new AudioExtractionService(ffmpegConverter, ffmpegConverter)).RunAsync(rest, cts2.Token);
+        exit = await new ProcessCommand(ffmpegLocator, fileSystem, ffprobeService).RunAsync(rest, cts2.Token);
         break;
     case "modules":
         using (var moduleHttpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) })
         {
-            var moduleManager = new ModuleManager(new ModulePaths(), new ModuleDownloader(moduleHttpClient), BuiltInModuleRecipes.Create());
+            var moduleManager = new ModuleManager(new ModulePaths(), new ModuleDownloader(moduleHttpClient), BuiltInModuleRecipes.Create(), new ConsoleMediaProgress());
             exit = await new ModulesCommand(moduleManager).RunAsync(rest, cts2.Token);
         }
         break;

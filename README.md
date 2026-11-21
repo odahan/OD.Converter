@@ -1,8 +1,8 @@
-# odconv — Audio Converter CLI (.NET 10 win-x64)
+# OD.Converter for Windows x64
 
-**Version 1.3.2** · [English / French user guide](docs/user-guide.html)
+**Version 1.4.0** · [English / French user guide](docs/user-guide.html)
 
-Self-contained Windows x64 executable with embedded FFmpeg 8.1.2. Conversion and
+Self-contained Windows x64 applications with embedded FFmpeg and FFprobe 8.1.2. Conversion and
 extraction work without external dependencies. Optional AI processing uses separately
 installed private CPU modules.
 
@@ -17,15 +17,26 @@ FFmpeg is a third-party component and remains subject to its own license, includ
 
 ## Installation
 
-**For immediate use on Windows x64, just download `odconv.exe` from [Releases](https://github.com/odahan/OD.Converter/releases) — no build required, no dependencies.**
+Choose an executable from [Releases](https://github.com/odahan/OD.Converter/releases):
 
-1. Go to **Releases** → download `odconv.exe` (~265 MB, self-contained, FFmpeg embedded)
-2. Run it directly: double-click or `odconv.exe --help`
-3. Optional: add to PATH or associate `.wav/.mp3` → `odconv "%1"`
+| Download | Usage |
+| --- | --- |
+| `odconv.exe` | Command line, scripts and interactive console menus |
+| `odconv-gui.exe` | Desktop interface on Windows 11 x64 |
 
-> Building from source is only needed for development. See [Build](#build) below. `publish/odconv.exe` is the same binary as in Releases.
-
+Each executable runs independently. To open a file directly in the desktop
+interface, run `odconv-gui.exe "C:\Media\song.wav"` or associate the file type
+with the desktop executable. Both editions use the same optional CPU modules
+under the current user's local application data.
 ## Usage
+
+### Desktop interface
+
+Use **Convert audio** for files and folders, **Process audio / video** for
+soundtrack extraction, separation and transcription, and **Inspect media**
+for metadata and raw FFprobe JSON. Use **Optional modules** to check or manage
+the CPU engines. **Help → User guide** extracts the bilingual guide next to
+the executable for offline use.
 
 ### Interactive menu
 
@@ -53,12 +64,13 @@ failure. Ctrl+C cancels processing and cleans intermediate files, retaining comp
 version, CPU profile and download size before confirmation. Installation is always explicit.
 Passing a file directly keeps the classic conversion prompts shown above.
 
-The bilingual guide is a single, self-contained HTML document embedded in the EXE.
-The help menu (or `odconv guide`) extracts/refreshes `odconv-user-guide.html` next to
-the running executable and opens the default browser. Keep the EXE in a writable
-folder. If browser launch fails, open the extracted file manually. Use
-`odconv guide --extract` to extract it without launching a browser. No network
-connection is needed to read the guide.
+Both executables embed the same self-contained English/French HTML guide.
+In the desktop app, choose **Help → User guide**, then **Open guide**.
+In the console, choose **User guide / Guide utilisateur** in the main menu
+or run `odconv guide`. Each entry extracts `odconv-user-guide.html` next
+to the running executable for opening in the default browser. Keep the EXEs
+in a writable folder. Use `odconv guide --extract` to write the guide without
+launching a browser. The extracted file works offline.
 
 `Buy me a coffee` presents voluntary support for Olivier Dahan / KNHSynths, using
 the same page as HarmoTools: [buymeacoffee.com/knhsynths](https://buymeacoffee.com/knhsynths).
@@ -147,15 +159,36 @@ Error: conversion failed (Invalid data found...). Check source file...
 
 ## Build
 
-Double-click `publish.bat` in Windows Explorer to run `build.ps1` and create `publish/odconv.exe`.
+Double-click `publish.bat` in Windows Explorer or run `./build.ps1` to publish
+both executables to `publish/`. The default build uses the .NET 11 SDK and
+the .NET 10 runtime.
+
+- `publish/odconv.exe` for the console and command line
+- `publish/odconv-gui.exe` for the desktop
+- `publish/SHA256SUMS.txt` with the checksums for both EXEs
+
+The script validates copies of the two standalone executables and verifies
+that both extract the current shared guide. It writes the reports under
+`out/release-validation-*`, including the detailed test output in `tests.log`.
+Close the desktop app before republishing to the same folder. The script prints
+the path of the updated GUI executable after replacing it.
+Use `-Output <folder>` to change the destination.
+
+The **Prepare Windows release** workflow builds an existing version tag and
+attaches both executables and their checksums to a GitHub release draft.
+See the [release validation procedure](docs/validation-livraison.md) for the
+Windows 11 acceptance checks.
+
+### CLI-only build
+
+Use `./build.ps1 -CliOnly` or `publish.bat -CliOnly` to publish the CLI.
+This mode also works with the .NET 10 SDK.
 
 ```powershell
 dotnet build src/OD.Converter -c Release -r win-x64 -m:1
 dotnet publish src/OD.Converter -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true -m:1 -o publish
 .\publish\odconv.exe --help
 ```
-
-Prerequisites: .NET SDK 10.0.400, Spectre.Console 0.49.1
 
 ### Tests
 
@@ -171,16 +204,16 @@ see [the release procedure and remaining checks](docs/validation-livraison.md).
 
 ## Embedded FFmpeg
 
-`tools/ffmpeg.exe` + `ffprobe.exe` (essentials_build-www.gyan.dev, gcc 16.1, GPL v3) copied from `C:\ffmpeg`. `tools/LICENSE` included. SingleFile publish extracts to temp folder via `IncludeAllContentForSelfExtract`.
+`tools/ffmpeg.exe` and `ffprobe.exe` (essentials_build-www.gyan.dev, gcc 16.1, GPL v3)
+ship in both executables. The CLI loads managed assemblies from the bundle and
+extracts each media tool and its license on first use into a versioned per-user
+cache. The .NET 11 WPF executable uses bundle extraction at startup for its
+mixed-mode runtime assemblies. See [dotnet/wpf#11842](https://github.com/dotnet/wpf/issues/11842).
 
 ## Structure
 
 ```
-src/OD.Converter/
-  OD.Converter.csproj (AssemblyName odconv, SelfContained, SingleFile)
-  tools/ffmpeg.exe, ffprobe.exe, LICENSE
-  Program.cs (dispatch + interactive mode)
-  Commands/ConvertCommand, ProbeCommand, FormatsCommand
-  Services/FormatRegistry, FfmpegConverter, FfprobeService, FfmpegLocator, InteractiveConverter, ErrorHandler
-  Models/ConversionOptions
+src/OD.Converter/       Command-line application, console menus and FFmpeg tools
+src/OD.Converter.Core/  Shared formats, media engines, module manager and offline guide
+src/OD.Converter.Gui/   WPF desktop application and ViewModels
 ```

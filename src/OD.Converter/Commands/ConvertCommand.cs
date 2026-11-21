@@ -7,11 +7,7 @@ namespace OD.Converter.Commands;
 /// <summary>Handles the non-interactive audio conversion command.</summary>
 public class ConvertCommand
 {
-    private readonly IFfmpegRunner _ffmpegRunner;
-    private readonly IFfmpegLocator _ffmpegLocator;
-    private readonly IFileSystem _fileSystem;
-    private readonly IArgumentBuilder _argumentBuilder;
-    private readonly IConversionOptionsValidator _validator;
+    private readonly ConversionService _conversion;
 
     /// <summary>Initializes a new instance of the <see cref="ConvertCommand"/> class.</summary>
     /// <param name="ffmpegRunner">The FFmpeg runner service.</param>
@@ -21,11 +17,7 @@ public class ConvertCommand
     /// <param name="validator">The conversion options validator.</param>
     public ConvertCommand(IFfmpegRunner ffmpegRunner, IFfmpegLocator ffmpegLocator, IFileSystem fileSystem, IArgumentBuilder argumentBuilder, IConversionOptionsValidator validator)
     {
-        _ffmpegRunner = ffmpegRunner;
-        _ffmpegLocator = ffmpegLocator;
-        _fileSystem = fileSystem;
-        _argumentBuilder = argumentBuilder;
-        _validator = validator;
+        _conversion = new ConversionService(ffmpegRunner, ffmpegLocator, fileSystem, argumentBuilder, validator);
     }
 
     /// <summary>Parses conversion arguments and runs FFmpeg.</summary>
@@ -35,146 +27,39 @@ public class ConvertCommand
         {
             var parsed = ParseArguments(args);
             if (parsed.ShowHelp) { PrintHelp(); return 0; }
-            if (parsed.Positional.Count == 0)
-                return ErrorHandler.Fail("Source file or directory is required. Usage: odconv convert <file>... --to <format> [options]");
-            if (string.IsNullOrWhiteSpace(parsed.TargetFormat))
-                return ErrorHandler.Fail("Target format is required. Use --to <format>, for example --to mp3.");
-
-            // Disallow --output when multiple inputs or directory
-            var hasMultiple = parsed.Positional.Count > 1 || parsed.Positional.Any(p => _fileSystem.DirectoryExists(p));
-            if (!string.IsNullOrEmpty(parsed.OutputPath) && hasMultiple)
-                return ErrorHandler.Fail("--output cannot be used with multiple input files or directories. Use --output-dir instead.");
-
-            // Collect all input files
-            var inputFiles = new List<string>();
-            var pattern = parsed.Pattern ?? "*";
-            foreach (var pos in parsed.Positional.Select(p => p.Trim().Trim('"')))
+            var encoding = new ConversionOptions
             {
-                if (_fileSystem.DirectoryExists(pos))
-                {
-                    var searchOption = parsed.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-                    var files = Directory.GetFiles(pos, pattern, searchOption);
-                    inputFiles.AddRange(files);
-                }
-                else
-                {
-                    if (!_fileSystem.FileExists(pos))
-                        return ErrorHandler.Fail($"Source file not found: \"{pos}\".");
-                    inputFiles.Add(pos);
-                }
-            }
-
-            if (inputFiles.Count == 0)
-                return ErrorHandler.Fail("No input files found.");
-
-            var targetFormat = parsed.TargetFormat.Trim().TrimStart('.').ToLowerInvariant();
-            var format = FormatRegistry.Get(targetFormat);
-            if (format is null) return ErrorHandler.Fail($"Unsupported format: \"{targetFormat}\". Formats: {FormatRegistry.SupportedList}");
-
-            // If only one file and output is specified, use it; else output-dir or default
-            var isSingle = inputFiles.Count == 1;
-            string? singleOutput = null;
-            if (isSingle && !string.IsNullOrEmpty(parsed.OutputPath))
-                singleOutput = parsed.OutputPath.Trim().Trim('"');
-
-            // Resolve ffmpeg path once
-            string ffmpeg;
-            try { ffmpeg = _ffmpegLocator.Resolve(parsed.FfmpegPath); }
-            catch (Exception ex) { return ErrorHandler.Fail(ex.Message, 2); }
+                TargetFormat = parsed.TargetFormat ?? "", Bitrate = parsed.Bitrate, Quality = parsed.Quality,
+                SampleRate = parsed.SampleRate, Channels = parsed.Channels, Mono = parsed.Mono,
+                BitDepth = parsed.BitDepth, CompressionLevel = parsed.CompressionLevel, Overwrite = parsed.Overwrite,
+                FfmpegPath = parsed.FfmpegPath, DryRun = parsed.DryRun
+            };
+            var plan = _conversion.Plan(new ConversionRequest(parsed.Positional, encoding, parsed.OutputPath,
+                parsed.OutputDir, parsed.Pattern, parsed.Recursive), ct, prepareCommands: parsed.DryRun);
 
             int exitCode = 0;
-            foreach (var input in inputFiles)
+            foreach (var entry in plan.Entries)
             {
-                var output = singleOutput;
-                if (string.IsNullOrEmpty(output))
+                var options = entry.Options;
+                var output = options.OutputPath;
+                if (options.DryRun && entry.Arguments is not null)
                 {
-                    // Determine output path
-                    if (!string.IsNullOrEmpty(parsed.OutputDir))
-                    {
-                        var relative = Path.GetRelativePath(Environment.CurrentDirectory, input);
-                        if (Path.IsPathRooted(relative) || relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
-                            relative = Path.GetFileName(input);
-                        output = Path.Combine(parsed.OutputDir, Path.ChangeExtension(relative, format.Extension));
-                    }
-                    else
-                    {
-                        // Default: same directory as input
-                        var dir = Path.GetDirectoryName(input) ?? ".";
-                        var name = Path.GetFileNameWithoutExtension(input);
-                        output = parsed.Mono ? Path.Combine(dir, $"{name}-mono{format.Extension}") : Path.Combine(dir, $"{name}{format.Extension}");
-                    }
+                    AnsiConsole.MarkupLine("[grey]Dry run:[/]");
+                    Console.WriteLine(FfmpegConverter.BuildCommandLine(plan.Executable, entry.Arguments));
+                    continue;
                 }
-                if (string.IsNullOrWhiteSpace(Path.GetExtension(output))) output += format.Extension;
 
-                var options = new ConversionOptions
-                {
-                    InputPath = input, OutputPath = output, TargetFormat = targetFormat, Bitrate = parsed.Bitrate,
-                    Quality = parsed.Quality, SampleRate = parsed.SampleRate, Channels = parsed.Channels, Mono = parsed.Mono,
-                    BitDepth = parsed.BitDepth, CompressionLevel = parsed.CompressionLevel, Overwrite = parsed.Overwrite,
-                    FfmpegPath = parsed.FfmpegPath, DryRun = parsed.DryRun,
-                };
-
-                try
-                {
-                    _validator.Validate(options);
-                    _validator.EnsureDifferentPaths(input, output);
-                    if (_fileSystem.FileExists(output) && options.Overwrite == "never" && !options.DryRun)
-                    {
-                        exitCode = ErrorHandler.Fail($"Output file already exists: \"{output}\". Use --overwrite always or choose another name.");
-                        continue;
-                    }
-
-                    if (!options.DryRun)
-                    {
-                        var outputDirectory = _fileSystem.GetDirectoryName(_fileSystem.GetFullPath(output));
-                        if (!string.IsNullOrEmpty(outputDirectory) && !_fileSystem.DirectoryExists(outputDirectory))
-                            _fileSystem.CreateDirectory(outputDirectory);
-                    }
-
-                    var ffmpegArguments = _argumentBuilder.BuildArguments(options);
-                    if (options.DryRun)
-                    {
-                        AnsiConsole.MarkupLine("[grey]Dry run:[/]");
-                        Console.WriteLine(FfmpegConverter.BuildCommandLine(ffmpeg, ffmpegArguments));
-                        continue;
-                    }
-
-                    AnsiConsole.MarkupLine($"[grey]Converting:[/] {Markup.Escape(Path.GetFileName(input))} → {Markup.Escape(Path.GetFileName(output))} [[{format.Key}]]");
-                    var (procExit, standardError) = await _ffmpegRunner.RunAsync(ffmpeg, ffmpegArguments, ct);
-                    if (procExit == 0)
-                    {
-                        if (!_fileSystem.FileExists(output))
-                        {
-                            exitCode = ErrorHandler.Fail($"Conversion completed but output file was not found: \"{output}\".", 3);
-                            continue;
-                        }
-                        var fileInfo = _fileSystem.GetFileInfo(output);
-                        AnsiConsole.MarkupLine($"[green]OK[/] {Markup.Escape(output)} ({fileInfo.Length / 1024} KB)");
-                    }
-                    else
-                    {
-                        var detail = ErrorHandler.FfmpegDetail(standardError, procExit);
-                        exitCode = ErrorHandler.Fail($"Conversion failed ({detail}). Check the source file or try another format.", 3);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    AnsiConsole.MarkupLine("[yellow]Conversion cancelled.[/]");
-                    return 130;
-                }
-                catch (ArgumentException ex)
-                {
-                    exitCode = ErrorHandler.Fail(ex.Message);
-                }
-                catch (Exception ex)
-                {
-                    exitCode = ErrorHandler.Fail($"Unexpected error: {ex.Message}", 3);
-                }
+                var result = await _conversion.ExecuteAsync(plan.Executable, entry, ct, () =>
+                    AnsiConsole.MarkupLine($"[grey]Converting:[/] {Markup.Escape(Path.GetFileName(options.InputPath))} → {Markup.Escape(Path.GetFileName(output))} [[{FormatRegistry.Get(options.TargetFormat)!.Key}]]"));
+                if (result.Error is not null)
+                    exitCode = ErrorHandler.Fail(result.Error, result.ExitCode);
+                else
+                    AnsiConsole.MarkupLine($"[green]OK[/] {Markup.Escape(output)} ({result.OutputBytes / 1024} KB)");
             }
-
             return exitCode;
         }
         catch (OperationCanceledException) { AnsiConsole.MarkupLine("[yellow]Conversion cancelled.[/]"); return 130; }
+        catch (MediaToolException ex) { return ErrorHandler.Fail(ex.Message, 2); }
         catch (ArgumentException ex) { return ErrorHandler.Fail(ex.Message); }
         catch (Exception ex) { return ErrorHandler.Fail($"Unexpected error: {ex.Message}", 3); }
     }

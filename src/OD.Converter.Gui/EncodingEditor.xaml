@@ -1,0 +1,47 @@
+<UserControl x:Class="OD.Converter.Gui.EncodingEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" IsTabStop="False">
+    <StackPanel>
+        <Label Content="_Format" Target="{Binding ElementName=FormatChoice}" Style="{StaticResource FieldLabel}"/>
+        <ComboBox x:Name="FormatChoice" Style="{StaticResource Choice}" HorizontalAlignment="Left" MinWidth="245"
+                  ItemsSource="{Binding Formats}" SelectedItem="{Binding Format}" DisplayMemberPath="Description"/>
+        <Expander Header="Advanced encoding" Margin="0,8,0,0">
+            <StackPanel Margin="0,8,0,0">
+                <WrapPanel>
+                    <StackPanel Margin="0,0,16,8" MinWidth="150" Visibility="{Binding HasBitrate, Converter={StaticResource VisibleWhen}}">
+                        <Label Content="_Bitrate" Target="{Binding ElementName=BitrateInput}" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="BitrateInput" Style="{StaticResource Field}" Text="{Binding Bitrate, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="{Binding BitrateHint}" Style="{StaticResource Hint}" MaxWidth="200"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,8" MinWidth="130" Visibility="{Binding HasQuality, Converter={StaticResource VisibleWhen}}">
+                        <Label Content="VBR _quality" Target="{Binding ElementName=QualityChoice}" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox x:Name="QualityChoice" ItemsSource="{Binding Qualities}" SelectedItem="{Binding Quality}"
+                                  Style="{StaticResource Choice}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,8" MinWidth="130">
+                        <Label Content="_Sample rate (Hz)" Target="{Binding ElementName=RateChoice}" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox x:Name="RateChoice" ItemsSource="{Binding SampleRates}" SelectedItem="{Binding SampleRate}"
+                                  Style="{StaticResource Choice}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,8" MinWidth="130">
+                        <Label Content="C_hannels" Target="{Binding ElementName=ChannelChoice}" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox x:Name="ChannelChoice" ItemsSource="{Binding ChannelCounts}" SelectedItem="{Binding Channels}"
+                                  Style="{StaticResource Choice}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,8" MinWidth="130" Visibility="{Binding HasDepth, Converter={StaticResource VisibleWhen}}">
+                        <Label Content="PCM _depth" Target="{Binding ElementName=DepthChoice}" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox x:Name="DepthChoice" ItemsSource="{Binding Depths}" SelectedItem="{Binding BitDepth}"
+                                  Style="{StaticResource Choice}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,8" MinWidth="140" Visibility="{Binding HasCompression, Converter={StaticResource VisibleWhen}}">
+                        <Label Content="FLAC _compression" Target="{Binding ElementName=CompressionChoice}" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox x:Name="CompressionChoice" ItemsSource="{Binding CompressionLevels}" SelectedItem="{Binding Compression}"
+                                  Style="{StaticResource Choice}"/>
+                    </StackPanel>
+                </WrapPanel>
+                <CheckBox Content="Force _mono (takes priority over channel count)" IsChecked="{Binding Mono}"
+                          FocusVisualStyle="{StaticResource KeyboardFocus}"/>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

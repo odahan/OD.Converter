@@ -19,7 +19,7 @@ Depuis la racine du dépôt, avec le SDK .NET du projet :
 ```powershell
 dotnet build OD.Converter.slnx -c Release -m:1
 dotnet test OD.Converter.slnx -c Release -m:1 --no-build --no-restore --logger "trx;LogFileName=release-tests.trx" --results-directory out/release-tests
-./build.ps1 -Configuration Release -Output publish
+./build.ps1 -CliOnly -Configuration Release -Output publish
 Get-FileHash publish/odconv.exe -Algorithm SHA256
 ```
 
@@ -28,6 +28,25 @@ Le résultat local est `publish/odconv.exe`. Une publication locale ne crée pas
 de release GitHub. Conserver l'empreinte avec le rapport pour identifier l'EXE
 effectivement testé. Les avertissements NU1900 signifient que l'audit NuGet n'a
 pas pu joindre son service ; ils ne constituent pas un audit réussi.
+
+## Préparer les deux exécutables Windows
+
+Avec le SDK .NET 11 et le runtime .NET 10, lancer `./build.ps1`.
+Le script exécute la suite CLI, publie `publish/odconv.exe` et
+`publish/odconv-gui.exe`, puis lance les contrôles sur des copies isolées.
+Il écrit les rapports dans `out/release-validation-*` et les empreintes
+dans `publish/SHA256SUMS.txt`. Le validateur GUI charge les vues WPF et
+contrôle FFmpeg, FFprobe, le guide intégré, le catalogue des modules, une
+conversion et une extraction PCM hors ligne. Le script vérifie aussi que les
+deux EXE extraient exactement le guide HTML commun.
+
+Sur une VM Windows 11 x64 propre, copier chacun des deux exécutables dans son
+propre dossier et vérifier les empreintes. Se connecter sous un compte standard
+et suivre les scénarios de la [recette WPF](specifications-interface-wpf.md#7-recette-et-critères-dacceptation),
+notamment les quatre actions, les conflits, l'annulation, les modules partagés et
+le chrome sous thèmes Windows clair et sombre. Consigner les échelles 100 %,
+150 % et 200 %, le contrôle clavier et le contraste élevé. Le workflow
+`Prepare Windows release` prépare une release GitHub brouillon pour le tag choisi.
 
 ## Mesurer l'EXE autonome
 

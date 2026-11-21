@@ -8,7 +8,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ".\build.ps1"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ".\build.ps1" %*
 set "publishExitCode=%ERRORLEVEL%"
 popd
 

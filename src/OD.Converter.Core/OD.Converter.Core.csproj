@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ApplicationVersion.props" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>OD.Converter</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../docs/user-guide.html" LogicalName="OD.Converter.UserGuide.html" />
+    <EmbeddedResource Include="Services/Modules/Resources/*" LogicalName="OD.Converter.Services.Modules.Resources.%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

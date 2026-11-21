@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/OD.Converter.Core/OD.Converter.Core.csproj" />
     <Project Path="src/OD.Converter/OD.Converter.csproj" />
   </Folder>
   <Folder Name="/tests/">

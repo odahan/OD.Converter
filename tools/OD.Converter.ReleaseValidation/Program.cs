@@ -30,6 +30,12 @@ try
     foreach (var command in new[] { new[] { "--help" }, ["--version"], ["formats"], ["process", "--help"], ["modules", "--help"] })
         await Run(published, command);
 
+    await Run(published, ["guide", "--extract"]);
+    var guide = Path.Combine(standalone, "odconv-user-guide.html");
+    if (!File.Exists(guide) || new FileInfo(guide).Length == 0)
+        throw new IOException("The standalone executable did not extract the embedded guide.");
+    results.Add(new { Check = "embedded-guide-extracted", Path = guide });
+
     var marker = Path.Combine(root, "markers.f32");
     using (var file = File.Create(marker))
     using (var writer = new BinaryWriter(file))
@@ -74,6 +80,11 @@ try
     var bundledTool = Directory.GetFiles(extraction, "ffmpeg.exe", SearchOption.AllDirectories).Single();
     if (!dryRun.Contains(bundledTool, StringComparison.OrdinalIgnoreCase))
         throw new IOException("The published executable did not select its embedded FFmpeg.");
+    var toolsDirectory = Path.GetDirectoryName(bundledTool)!;
+    if (!File.Exists(Path.Combine(toolsDirectory, "ffprobe.exe")) || !File.Exists(Path.Combine(toolsDirectory, "LICENSE")))
+        throw new IOException("The standalone bundle is missing FFprobe or its license.");
+    if (Directory.EnumerateFiles(extraction, "OD.Converter.Core.dll", SearchOption.AllDirectories).Any())
+        throw new IOException("The standalone bundle extracted the managed core assembly.");
     results.Add(new { Check = "embedded-ffmpeg-selected", Path = bundledTool });
     await Run(published, ["convert", wave, "--to", "mp3", "-o", converted]);
     await Run(published, ["probe", converted]);

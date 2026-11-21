@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <Version>1.4.0</Version>
+    <Product>OD.Converter</Product>
+    <Copyright>© 2026 Olivier Dahan</Copyright>
+    <RepositoryUrl>https://github.com/odahan/OD.Converter</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/odahan/OD.Converter</PackageProjectUrl>
+  </PropertyGroup>
+</Project>

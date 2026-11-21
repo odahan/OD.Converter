@@ -1,0 +1,279 @@
+<local:DarkWindow x:Class="OD.Converter.Gui.MainWindow"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:local="clr-namespace:OD.Converter.Gui"
+                  Title="OD.Converter" Style="{StaticResource AppWindow}" Width="1040" Height="800"
+                  MinWidth="520" MinHeight="350" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Menu IsEnabled="{Binding CanEdit}">
+            <MenuItem Header="_Help">
+                <MenuItem Header="_Supported formats" Command="{Binding ShowHelpCommand}" CommandParameter="Supported formats"/>
+                <MenuItem Header="_User guide" Command="{Binding ShowHelpCommand}" CommandParameter="User guide"/>
+                <MenuItem Header="_About" Command="{Binding ShowHelpCommand}" CommandParameter="About"/>
+                <Separator/>
+                <MenuItem Header="_Buy Me a Coffee" Command="{Binding ShowHelpCommand}" CommandParameter="Buy Me a Coffee"/>
+            </MenuItem>
+        </Menu>
+
+        <TabControl x:Name="WorkflowTabs" Grid.Row="1" ItemContainerStyle="{StaticResource NavigationTab}" SelectedIndex="{Binding SelectedPage, Mode=TwoWay}" IsEnabled="{Binding CanEdit}" Margin="12,6,12,0">
+            <TabItem Header="_Convert audio">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="14,10,14,0">
+                        <TextBlock Text="Convert audio" Style="{StaticResource PageHeading}"/>
+                        <Border Style="{StaticResource Card}" Margin="0,8,0,12">
+                            <StackPanel>
+                                <Label Content="_Input mode" Target="{Binding ElementName=ConversionMode}" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox x:Name="ConversionMode" ItemsSource="{Binding SourceModes}" SelectedItem="{Binding ConversionMode}"
+                                          Style="{StaticResource Choice}" Width="165" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                                <Label Content="_Source" Target="{Binding ElementName=ConversionSource}" Style="{StaticResource FieldLabel}"/>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="_Browse…" Command="{Binding BrowseConversionSourceCommand}" Style="{StaticResource BrowseAction}"/>
+                                    <TextBox x:Name="ConversionSource" Style="{StaticResource Field}" Text="{Binding ConversionSource, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="{Binding IsBatch}" MaxHeight="100" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
+                                </DockPanel>
+                                <TextBlock Text="Enter one path per line when selecting multiple files." Style="{StaticResource Hint}"
+                                           Visibility="{Binding IsMultiple, Converter={StaticResource VisibleWhen}}"/>
+                                <StackPanel Visibility="{Binding IsFolder, Converter={StaticResource VisibleWhen}}" Margin="0,10,0,0">
+                                    <Label Content="File _pattern" Target="{Binding ElementName=PatternInput}" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox x:Name="PatternInput" Style="{StaticResource Field}" Width="160" HorizontalAlignment="Left"
+                                             Text="{Binding ConversionPattern, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <CheckBox Content="Include _subfolders" IsChecked="{Binding Recursive}" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <local:EncodingEditor DataContext="{Binding ConversionEncoding}"/>
+                                <CheckBox Content="Suggest mono when the source has one channel" IsChecked="{Binding SuggestMono}"
+                                          Visibility="{Binding IsSingle, Converter={StaticResource VisibleWhen}}" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Label Content="{Binding DestinationLabel}" Target="{Binding ElementName=ConversionDestination}" Style="{StaticResource FieldLabel}"/>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="B_rowse…" Command="{Binding BrowseConversionOutputCommand}" Style="{StaticResource BrowseAction}"/>
+                                    <TextBox x:Name="ConversionDestination" Style="{StaticResource Field}" Text="{Binding ConversionOutput, UpdateSourceTrigger=PropertyChanged}"/>
+                                </DockPanel>
+                                <TextBlock Text="Leave blank to write beside each source." Style="{StaticResource Hint}"/>
+                                <CheckBox Content="Allow replacement after confirmation" IsChecked="{Binding AllowOverwrite}" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Expander Header="FFmpeg tools" Margin="0,0,0,12">
+                            <StackPanel Margin="0,8,0,0">
+                                <Label Content="Custom FFmpeg executable or folder (optional)" Target="{Binding ElementName=ConversionTools}" Style="{StaticResource FieldLabel}"/>
+                                <TextBox x:Name="ConversionTools" Style="{StaticResource Field}" Text="{Binding ConversionTools, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Expander>
+                        <WrapPanel>
+                            <Button Content="_Preview command" Command="{Binding RunCommand}" CommandParameter="Preview" Style="{StaticResource Action}"/>
+                            <Button Content="_Convert" Command="{Binding RunCommand}" CommandParameter="Convert" Style="{StaticResource Action}"/>
+                        </WrapPanel>
+                        <TextBox Text="{Binding ConversionReview, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="260"
+                                 Margin="0,4,0,12" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Resolved paths and command preview">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource Field}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ConversionReview}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="_Process audio / video">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="14,10,14,0">
+                        <TextBlock Text="Process audio / video" Style="{StaticResource PageHeading}"/>
+                        <Border Style="{StaticResource Card}" Margin="0,8,0,12">
+                            <StackPanel>
+                                <Label Content="_Source file" Target="{Binding ElementName=ProcessingSource}" Style="{StaticResource FieldLabel}"/>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="_Browse…" Command="{Binding BrowseProcessingSourceCommand}" Style="{StaticResource BrowseAction}"/>
+                                    <TextBox x:Name="ProcessingSource" Text="{Binding ProcessingSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Field}"/>
+                                </DockPanel>
+                                <Expander Header="FFmpeg tools" Margin="0,8,0,0">
+                                    <StackPanel Margin="0,8,0,0">
+                                        <Label Content="Custom FFmpeg executable or folder (optional)" Target="{Binding ElementName=ProcessingTools}" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="ProcessingTools" Style="{StaticResource Field}" Text="{Binding ProcessingTools, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Expander>
+                                <Button Content="_Analyze source" Command="{Binding RunCommand}" CommandParameter="Analyze"
+                                        HorizontalAlignment="Left" Margin="0,10,0,0" Style="{StaticResource Action}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Label Content="Audio _track" Target="{Binding ElementName=TrackChoice}" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox x:Name="TrackChoice" ItemsSource="{Binding Tracks}" SelectedItem="{Binding SelectedTrack}"
+                                          DisplayMemberPath="Label" Style="{StaticResource Choice}"/>
+                                <Label Content="A_ction" Target="{Binding ElementName=WorkflowChoice}" Style="{StaticResource FieldLabel}" Margin="0,10,0,0"/>
+                                <ComboBox x:Name="WorkflowChoice" ItemsSource="{Binding Workflows}" SelectedItem="{Binding SelectedWorkflow}"
+                                          DisplayMemberPath="Label" Style="{StaticResource Choice}"/>
+                                <TextBlock Text="{Binding ProcessingAvailabilityText}" Style="{StaticResource Hint}"/>
+                                <Button Content="Optional _modules" Command="{Binding NavigateToModulesCommand}" Style="{StaticResource Action}"
+                                        HorizontalAlignment="Left" Margin="0,6,0,0"/>
+                                <StackPanel Visibility="{Binding ShowLanguage, Converter={StaticResource VisibleWhen}}" Margin="0,10,0,0">
+                                    <Label Content="Source _language" Target="{Binding ElementName=LanguageInput}" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox x:Name="LanguageInput" Text="{Binding ProcessingLanguage, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource Field}" HorizontalAlignment="Left" MinWidth="110"/>
+                                    <TextBlock Text="Use Auto or a two-letter source language code (en, fr)." Style="{StaticResource Hint}"/>
+                                </StackPanel>
+                                <TextBlock Text="Exports" FontWeight="SemiBold" Margin="0,10,0,6"/>
+                                <ItemsControl ItemsSource="{Binding Exports}">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate><CheckBox IsChecked="{Binding Selected}" Content="{Binding Label}" Margin="0,0,15,5"/></DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Label Content="Export _folder" Target="{Binding ElementName=ExportFolder}" Style="{StaticResource FieldLabel}"/>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="B_rowse…" Command="{Binding BrowseProcessingDestinationCommand}" Style="{StaticResource BrowseAction}"/>
+                                    <TextBox x:Name="ExportFolder" Text="{Binding ProcessingDirectory, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Field}"/>
+                                </DockPanel>
+                                <Label Content="Filename pre_fix" Target="{Binding ElementName=ExportPrefix}" Style="{StaticResource FieldLabel}" Margin="0,10,0,0"/>
+                                <TextBox x:Name="ExportPrefix" Text="{Binding ProcessingPrefix, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Field}"/>
+                                <StackPanel Margin="0,10,0,0" Visibility="{Binding HasAudioExports, Converter={StaticResource VisibleWhen}}">
+                                    <local:EncodingEditor DataContext="{Binding ProcessingEncoding}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <TextBox Style="{StaticResource Field}" Text="{Binding ProcessingSummary, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                 MaxHeight="200" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Processing plan"
+                                 Margin="0,0,0,8"/>
+                        <Button Content="Review and _process" Command="{Binding RunCommand}" CommandParameter="Process"
+                                Style="{StaticResource Action}" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="_Inspect media">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="14,10,14,0">
+                        <TextBlock Text="Inspect media" Style="{StaticResource PageHeading}"/>
+                        <Border Style="{StaticResource Card}" Margin="0,8,0,12">
+                            <StackPanel>
+                                <Label Content="_Source file" Target="{Binding ElementName=InspectSource}" Style="{StaticResource FieldLabel}"/>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="_Browse…" Command="{Binding BrowseInspectSourceCommand}" Style="{StaticResource BrowseAction}"/>
+                                    <TextBox x:Name="InspectSource" Text="{Binding InspectSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Field}"/>
+                                </DockPanel>
+                                <Expander Header="FFmpeg tools" Margin="0,8,0,0">
+                                    <StackPanel Margin="0,8,0,0">
+                                        <Label Content="Custom FFmpeg executable or folder (optional)" Target="{Binding ElementName=InspectTools}" Style="{StaticResource FieldLabel}"/>
+                                        <TextBox x:Name="InspectTools" Style="{StaticResource Field}" Text="{Binding InspectTools, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
+                        </Border>
+                        <WrapPanel>
+                            <Button Content="_Analyze source" Command="{Binding RunCommand}" CommandParameter="Inspect" Style="{StaticResource Action}"/>
+                            <Button Content="View raw _JSON" Command="{Binding ShowJsonCommand}" Style="{StaticResource Action}"/>
+                            <Button Content="_Copy JSON" Command="{Binding CopyJsonCommand}" Style="{StaticResource Action}"/>
+                        </WrapPanel>
+                        <TextBox Text="{Binding Inspection, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                 AutomationProperties.Name="Media metadata and timeline" Margin="0,4,0,12">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource Field}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Inspection}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="_Optional modules">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="14,10,14,0">
+                        <TextBlock Text="Optional modules" Style="{StaticResource PageHeading}"/>
+                        <TextBlock Text="Separation and transcription use optional CPU modules shared with the command-line app."
+                                   Style="{StaticResource Hint}" Margin="0,0,0,12"/>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Label Content="_Module" Target="{Binding ElementName=ModuleChoice}" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox x:Name="ModuleChoice" ItemsSource="{Binding ModuleOptions}" SelectedItem="{Binding SelectedModule}"
+                                          Width="220" HorizontalAlignment="Left" Style="{StaticResource Choice}"/>
+                                <TextBlock Text="{Binding ModuleStateText}" FontSize="19" FontWeight="SemiBold" Margin="0,12,0,0"
+                                           AutomationProperties.LiveSetting="Polite"/>
+                                <TextBlock Text="{Binding ModuleDescription}" Style="{StaticResource Hint}"/>
+                                <TextBlock Text="{Binding ModuleMessage}" Style="{StaticResource Hint}"/>
+                            </StackPanel>
+                        </Border>
+                        <WrapPanel>
+                            <Button Content="_Refresh" Command="{Binding RunCommand}" CommandParameter="Refresh" Style="{StaticResource Action}"/>
+                            <Button Content="_Verify" Command="{Binding RunCommand}" CommandParameter="Verify" Style="{StaticResource Action}"/>
+                            <Button Content="_Install" Command="{Binding RunCommand}" CommandParameter="Install" Style="{StaticResource Action}"/>
+                            <Button Content="Re_pair" Command="{Binding RunCommand}" CommandParameter="Repair" Style="{StaticResource Action}"/>
+                            <Button Content="_Uninstall" Command="{Binding RunCommand}" CommandParameter="Uninstall" Style="{StaticResource Action}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <Expander Grid.Row="2" Header="Results and warnings" IsExpanded="{Binding ShowResults}" Margin="16,4,16,0">
+            <ScrollViewer MaxHeight="195" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,4">
+                    <ItemsControl ItemsSource="{Binding Notices}" Margin="0,0,0,4">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2"/></DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ListBox ItemsSource="{Binding Results}" SelectedItem="{Binding SelectedResult}" MaxHeight="112"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Output files">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel ToolTip="{Binding Detail}">
+                                    <TextBlock TextWrapping="Wrap">
+                                        <Run Text="{Binding Status, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=" · "/><Run Text="{Binding Name, Mode=OneWay}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Path}" Style="{StaticResource Hint}"/>
+                                    <TextBlock Text="{Binding Detail}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <WrapPanel Margin="0,6,0,0">
+                        <Button Content="Copy _path" Command="{Binding CopyResultPathCommand}" Style="{StaticResource Action}"/>
+                        <Button Content="_Open file" Command="{Binding OpenResultCommand}" Style="{StaticResource Action}"/>
+                        <Button Content="Show in _folder" Command="{Binding ShowResultFolderCommand}" Style="{StaticResource Action}"/>
+                        <Button Content="_Technical details" Command="{Binding ShowDiagnosticsCommand}" Style="{StaticResource Action}"/>
+                    </WrapPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Expander>
+        <Border Grid.Row="3" Background="{DynamicResource PanelBrush}" Padding="16,7" BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource LineBrush}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="_Cancel" Style="{StaticResource Action}" Margin="10,0,0,0"
+                        Command="{Binding RunCancelCommand}" Visibility="{Binding IsBusy, Converter={StaticResource VisibleWhen}}"/>
+                <TextBlock DockPanel.Dock="Left" Text="{Binding State}" Style="{StaticResource OperationState}" VerticalAlignment="Center"
+                           AutomationProperties.Name="{Binding State}" AutomationProperties.LiveSetting="Polite" Margin="0,0,14,0"/>
+                <StackPanel VerticalAlignment="Center" Visibility="{Binding IsBusy, Converter={StaticResource VisibleWhen}}">
+                    <TextBlock Text="{Binding Stage}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                    <ProgressBar Height="4" Margin="0,4,0,0" Minimum="0" Maximum="{Binding TotalUnits}" Value="{Binding CompletedUnits}"
+                                 IsIndeterminate="{Binding IsIndeterminate}" AutomationProperties.Name="Operation progress"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</local:DarkWindow>

@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="OD.Converter 1.3.2 — offline English and French user guide for audio conversion, video soundtrack extraction, separation and transcription.">
-<title>OD.Converter 1.3.2 · User guide / Guide utilisateur</title>
+<meta name="description" content="OD.Converter 1.4.0 — offline English and French guide to the desktop and command-line apps for audio conversion, soundtrack extraction, separation and transcription.">
+<title>OD.Converter 1.4.0 · User guide / Guide utilisateur</title>
 <style>
     :root {
         --bg:#f4f7fa;
@@ -345,7 +345,7 @@
 </head>
 <body id="top">
 <header>
-<div class="eyebrow">Windows x64 · Version 1.3.2 · Offline guide</div>
+<div class="eyebrow">Windows x64 · Version 1.4.0 · Offline guide</div>
 <h1>OD.Converter</h1>
 <p>Your audio &amp; video toolkit.<br><span lang="fr">Votre boîte à outils audio et vidéo.</span></p>
 <nav aria-label="Choose your language / Choisir la langue"><a href="#en" lang="en">English guide ↓</a><a href="#fr" lang="fr">Guide français ↓</a></nav>
@@ -353,15 +353,15 @@
 <div class="layout">
 <aside aria-label="Contents / Sommaire">
 <strong lang="en">EN / English</strong>
-<a href="#en-start">Getting started</a><a href="#en-menus">Interactive menus</a><a href="#en-modules">Optional modules</a><a href="#en-cli">Command reference</a><a href="#en-formats">Formats &amp; encoding</a><a href="#en-files">Files &amp; timing</a><a href="#en-help">Troubleshooting</a>
+<a href="#en-start">Getting started</a><a href="#en-desktop">Desktop app</a><a href="#en-menus">Console menus</a><a href="#en-modules">Optional modules</a><a href="#en-cli">Command reference</a><a href="#en-formats">Formats &amp; encoding</a><a href="#en-files">Files &amp; timing</a><a href="#en-help">Troubleshooting</a>
 <strong lang="fr">FR / Français</strong>
-<a href="#fr-start">Premiers pas</a><a href="#fr-menus">Menus interactifs</a><a href="#fr-modules">Modules facultatifs</a><a href="#fr-cli">Référence des commandes</a><a href="#fr-formats">Formats et encodage</a><a href="#fr-files">Fichiers et chronologie</a><a href="#fr-help">Dépannage</a>
+<a href="#fr-start">Premiers pas</a><a href="#fr-desktop">Interface graphique</a><a href="#fr-menus">Menus de la console</a><a href="#fr-modules">Modules facultatifs</a><a href="#fr-cli">Référence des commandes</a><a href="#fr-formats">Formats et encodage</a><a href="#fr-files">Fichiers et chronologie</a><a href="#fr-help">Dépannage</a>
 </aside>
 <main>
 <article id="en" lang="en">
 <span class="tag">ENGLISH / USER GUIDE</span>
 <h2>From a media file to the output you need.</h2>
-<p class="lead">Convert audio, extract a video soundtrack, isolate vocals or generate a transcript and subtitles. Use the guided menus or automate the same tasks from the command line.</p>
+<p class="lead">Convert audio, extract a video soundtrack, isolate vocals or generate a transcript and subtitles. Work in the desktop app, use the console menus or automate tasks from the command line.</p>
 <div class="cards">
 <div class="card"><strong>Convert &amp; extract</strong>
 <p>Built-in FFmpeg. Works offline without optional modules.</p>
@@ -371,14 +371,30 @@
 </div>
 </div>
 <h3 id="en-start">01 / Getting started</h3>
+<ul>
+<li><strong>Desktop app.</strong> Open <code>odconv-gui.exe</code> on Windows 11 x64. To preselect a source in <strong>Convert audio</strong>, drop a file onto the EXE or run <code>.\odconv-gui.exe "song.wav"</code> in PowerShell from its folder.</li>
+<li><strong>Console and command line.</strong> Open <code>odconv.exe</code> on Windows x64 for the interactive menus or run it with a command in your terminal. Drop a file onto this EXE or run <code>.\odconv.exe "song.wav"</code> to open classic conversion.</li>
+</ul>
+<p>Both executables are self-contained and include FFmpeg and FFprobe. You can keep them in the same folder. Examples use <code>odconv</code>. If it is outside your PATH, run <code>.\odconv.exe</code> in PowerShell from its folder. Quote paths that contain spaces.</p>
+<div class="note"><strong>Open this guide from either app.</strong> In the desktop app, choose <strong>Help → User guide</strong>, then <strong>Open guide</strong>. In the console, choose <strong>User guide / Guide utilisateur</strong> in the main menu or run <code>odconv guide</code>. Both extract the same <code>odconv-user-guide.html</code> beside the running EXE. Use a writable folder. The HTML works offline without other files.</div>
+<h3 id="en-desktop">02 / Desktop app</h3>
+<h4>Convert audio</h4>
 <ol>
-<li>Place <code>odconv.exe</code> in a folder of your choice on Windows x64. No .NET or global Python installation is needed for the self-contained release.</li>
-<li>Double-click the EXE, or run <code>odconv</code> in a terminal from its folder. In PowerShell, use <code>.\odconv.exe</code> if it is not on PATH.</li>
-<li>Select <strong>Process audio / video</strong> for soundtrack extraction, separation or transcription, or <strong>Convert audio (classic)</strong> for guided audio conversion.</li>
+<li>Choose <strong>Single file</strong>, <strong>Multiple files</strong> or <strong>Folder</strong>. Browse or enter paths directly. In multiple-file mode, enter one path per line. In folder mode, set a pattern such as <code>*.wav</code> and select <strong>Include subfolders</strong> for a recursive search.</li>
+<li>Choose a format and open <strong>Advanced encoding</strong> to set bitrate or quality, sample rate, channels, mono, PCM depth or FLAC compression as applicable. Leave the destination empty to write beside each source.</li>
+<li>Select <strong>Preview command</strong> to see resolved paths and FFmpeg commands. Select <strong>Convert</strong> to review and run the conversion. To replace existing files, select <strong>Allow replacement after confirmation</strong> and approve the listed destinations.</li>
 </ol>
-<p>Examples below use <code>odconv</code>. Quote paths that contain spaces. Dragging an audio file onto the EXE, or running <code>odconv "song.wav"</code>, opens classic conversion directly.</p>
-<div class="note"><strong>Keep this guide nearby.</strong> The menu entry <strong>User guide / Guide utilisateur</strong> extracts <code>odconv-user-guide.html</code> beside the running EXE and opens your default browser. The file is refreshed when the embedded content changes. The EXE folder must be writable. The guide itself requires no network, JavaScript, external fonts or other files.</div>
-<h3 id="en-menus">02 / Interactive menus</h3>
+<h4>Process audio / video</h4>
+<ol>
+<li>Choose a source, then <strong>Analyze source</strong>. Check the selected <strong>Audio track</strong>. If there are several tracks, use the stream index, language and title to pick the one you want.</li>
+<li>Choose <strong>Extract soundtrack</strong>, <strong>Separate vocals and background</strong>, <strong>Transcribe</strong> or <strong>Separate and transcribe</strong>. Select the exports. For transcription, keep <strong>Auto</strong> or enter the two-letter source language. Unavailable actions show which modules they require.</li>
+<li>Review the export folder, filename prefix and output paths. Audio exports default to WAV. Choose <strong>Review and process</strong> and confirm. Use <strong>Cancel</strong> to interrupt an operation. Open <strong>Results and warnings</strong> to see completed files, missing files and messages. Select a completed output to copy its path, open it or show it in its folder.</li>
+</ol>
+<h4>Inspect media</h4>
+<p>Choose a source and select <strong>Analyze source</strong> to see the format, streams, durations, timeline offsets and warnings. Use <strong>View raw JSON</strong> or <strong>Copy JSON</strong> to access the FFprobe output. A video without audio can still be inspected.</p>
+<h4>Optional modules and Help</h4>
+<p>Open <strong>Optional modules</strong> to refresh, verify or manage either module. See <a href="#en-modules">Optional modules</a> for details. The <strong>Help</strong> menu also shows the supported formats and application version, and links to the support page.</p>
+<h3 id="en-menus">03 / Interactive console menus</h3>
 <p>The interface is in English. Use <kbd>↑</kbd> / <kbd>↓</kbd> to move, <kbd>Enter</kbd> to select, and <kbd>Space</kbd> to toggle export checkboxes. Defaults appear in prompts. Choose <strong>Back</strong> to return, or leave the source prompt blank. <kbd>Ctrl</kbd> + <kbd>C</kbd> cancels the session.</p>
 <h4>Process audio / video</h4>
 <ol>
@@ -422,8 +438,8 @@
 <p>Select a source, target format, bitrate or quality, mono setting, sample rate and output filename. Review the summary and start. You can convert another file afterward. For explicit track selection in a video, use <strong>Process audio / video</strong>.</p>
 <h4>Buy me a coffee — Support the project</h4>
 <p>If OD.Converter is useful to you, you can support its development. Open <strong>Buy me a coffee</strong> from the main menu, then choose <strong>Open Buy Me a Coffee</strong> to visit <a href="https://buymeacoffee.com/knhsynths">Olivier Dahan / KNHSynths on Buy Me a Coffee</a> in your default browser, or choose <strong>Back</strong> to return. This is the same support page used by HarmoTools. Contributions of any amount are voluntary and appreciated. Visiting the page requires a network connection.</p>
-<h3 id="en-modules">03 / Optional modules</h3>
-<p>Open <strong>Optional modules</strong>, choose <code>separation</code> (Demucs) or <code>transcription</code> (Whisper), then choose an operation. Install, Repair and Uninstall require confirmation in the menu. CLI commands below execute the requested operation directly.</p>
+<h3 id="en-modules">04 / Optional modules</h3>
+<p>Open <strong>Optional modules</strong>, choose <code>separation</code> (Demucs) or <code>transcription</code> (Whisper), then choose an operation. The desktop and console apps share the same installation. Use <strong>Refresh</strong> in the desktop app after changing a module in the console. Install, Repair and Uninstall require confirmation in either interactive interface. The CLI commands below execute the requested operation directly.</p>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -470,7 +486,7 @@ odconv modules status transcription
 odconv modules verify separation
 odconv modules repair transcription
 odconv modules uninstall separation</code></pre>
-<h3 id="en-cli">04 / Command reference</h3>
+<h3 id="en-cli">05 / Command reference</h3>
 <p>CLI commands are noninteractive. Use <code>--overwrite always</code> only when replacement is intended. Each command accepts <code>--help</code>.</p>
 <pre><code>odconv --help
 odconv --version
@@ -536,7 +552,7 @@ odconv process "clip.mp4" --action separate-transcribe --language fr --output-di
 </tbody>
 </table></div>
 <p><code>process</code> accepts one source at a time. <code>-o</code>, <code>--dry-run</code>, recursive and batch options belong to <code>convert</code>.</p>
-<h3 id="en-formats">05 / Formats &amp; encoding</h3>
+<h3 id="en-formats">06 / Formats &amp; encoding</h3>
 <p>Supported output formats: <strong>WAV, AIFF, FLAC, WavPack (wv), ALAC, MP3, Ogg Vorbis, Opus, AAC, M4A/AAC and WMA</strong>. ALAC uses the <code>.m4a</code> extension. Input support depends on the bundled FFmpeg build. Video sources produce audio exports; the program does not export edited video.</p>
 <div class="table-scroll"><table>
 <thead>
@@ -573,12 +589,12 @@ odconv process "clip.mp4" --action separate-transcribe --language fr --output-di
 </tbody>
 </table></div>
 <p>For editing and timing checks, prefer WAV at an appropriate bit depth. Lossy formats reduce file size and can add encoder delay. Converting a lossy source to a lossless format cannot restore discarded detail.</p>
-<h3 id="en-files">06 / Files, timing &amp; quality</h3>
+<h3 id="en-files">07 / Files, timing &amp; quality</h3>
 <p>Process exports use <code>&lt;prefix&gt;-original.wav</code>, <code>-vocals.wav</code>, <code>-background.wav</code>, <code>-transcript.txt</code> and <code>-subtitles.srt</code>. The audio extension follows the chosen format. Use different prefixes or directories for different sources with the same name.</p>
 <p>Sources are protected from replacement. Process outputs are finalized individually after successful export; if a later step fails, already completed files are retained and missing files are reported. Cancellation cleans intermediate work where possible and reports cleanup failures.</p>
 <p>Extraction and AI preparation preserve the source presentation timeline, including delayed tracks and silence; PCM lengths are measured. Unknown or inconsistent source timelines are rejected instead of silently guessed. Timestamp-free PCM WAV uses sample zero as its origin. Compressed exports may add encoder delay; use PCM as the editing reference.</p>
 <div class="note warning"><strong>Review AI output.</strong> Separation may leave artifacts or remove wanted sound. Transcripts and phrase boundaries require review. TXT/SRT are UTF-8 and global, without speaker identification or translation. Automatic language detection may omit a language in multilingual recordings; choose a known source language when possible. Clean Windows and additional representative media checks remain deferred; existing validation does not guarantee every source.</div>
-<h3 id="en-help">07 / Troubleshooting &amp; exit codes</h3>
+<h3 id="en-help">08 / Troubleshooting &amp; exit codes</h3>
 <details><summary>A treatment is unavailable</summary>
 <p>Open Optional modules, inspect its state and Install or Repair the required module. Extraction and classic conversion do not require either AI module. No module is downloaded implicitly.</p>
 </details>
@@ -592,15 +608,15 @@ odconv process "clip.mp4" --action separate-transcribe --language fr --output-di
 <p>Put the EXE in a writable folder and retry. Run <code>odconv guide --extract</code>, then open <code>odconv-user-guide.html</code> beside the EXE manually. Check your default browser association. The guide is also available as <code>docs/user-guide.html</code> in the source tree.</p>
 </details>
 <details><summary>Processing fails or takes a long time</summary>
-<p>Read the last error and the list of completed outputs. Verify the modules, check memory and disk space, or try a shorter source. CPU AI processing may be slow. For timeline errors, inspect the source metadata; the program does not silently invent timing. Press Ctrl+C to cancel.</p>
+<p>Read the last error and the list of completed outputs. Verify the modules, check memory and disk space, or try a shorter source. CPU AI processing may be slow. For timeline errors, inspect the source metadata; the program does not silently invent timing. Use <strong>Cancel</strong> in the desktop app or <kbd>Ctrl</kbd> + <kbd>C</kbd> in the console.</p>
 </details>
-<p><strong>Exit codes:</strong> <code>0</code> success/help; <code>1</code> arguments, source or selection error; <code>2</code> required tool/module unavailable or module verification not ready; <code>3</code> processing or operational failure (including guide extraction/opening); <code>130</code> cancelled. Probe retains code 1 for analysis errors.</p>
+<p><strong>CLI exit codes:</strong> <code>0</code> success/help; <code>1</code> arguments, source or selection error; <code>2</code> required tool/module unavailable or module verification not ready; <code>3</code> processing or operational failure (including guide extraction/opening); <code>130</code> cancelled. Probe retains code 1 for analysis errors.</p>
 <p class="back"><a href="#top">↑ Back to languages</a></p>
 </article>
 <article id="fr" lang="fr">
 <span class="tag">FRANÇAIS / GUIDE UTILISATEUR</span>
 <h2>Du fichier multimédia au résultat souhaité.</h2>
-<p class="lead">Convertissez du son, extrayez la bande sonore d’une vidéo, isolez une voix ou produisez une transcription et des sous-titres. Utilisez les menus guidés ou automatisez ces tâches en ligne de commande.</p>
+<p class="lead">Convertissez du son, extrayez la bande sonore d’une vidéo, isolez une voix ou produisez une transcription et des sous-titres. Utilisez l’interface graphique ou les menus de la console, ou automatisez ces tâches en ligne de commande.</p>
 <div class="cards">
 <div class="card"><strong>Convertir et extraire</strong>
 <p>FFmpeg est intégré. Fonctionne hors ligne sans module facultatif.</p>
@@ -610,14 +626,30 @@ odconv process "clip.mp4" --action separate-transcribe --language fr --output-di
 </div>
 </div>
 <h3 id="fr-start">01 / Premiers pas</h3>
+<ul>
+<li><strong>Interface graphique.</strong> Ouvrez <code>odconv-gui.exe</code> sous Windows 11 x64. Pour présélectionner une source dans <strong>Convert audio</strong>, glissez un fichier sur l’EXE ou lancez <code>.\odconv-gui.exe "musique.wav"</code> dans PowerShell depuis son dossier.</li>
+<li><strong>Console et ligne de commande.</strong> Ouvrez <code>odconv.exe</code> sous Windows x64 pour accéder aux menus interactifs ou lancez-le avec une commande dans votre terminal. Glissez un fichier sur cet EXE ou lancez <code>.\odconv.exe "musique.wav"</code> pour ouvrir la conversion classique.</li>
+</ul>
+<p>Les deux exécutables sont autonomes et incluent FFmpeg et FFprobe. Vous pouvez les placer dans le même dossier. Les exemples utilisent <code>odconv</code>. Si le programme ne figure pas dans le PATH, utilisez <code>.\odconv.exe</code> depuis son dossier dans PowerShell. Placez les chemins contenant des espaces entre guillemets.</p>
+<div class="note"><strong>Ouvrir ce guide depuis les deux applications.</strong> Dans l’interface graphique, choisissez <strong>Help → User guide</strong>, puis <strong>Open guide</strong>. Dans la console, sélectionnez <strong>User guide / Guide utilisateur</strong> dans le menu principal ou lancez <code>odconv guide</code>. Les deux applications extraient le même <code>odconv-user-guide.html</code> à côté de l’EXE utilisé. Utilisez un dossier accessible en écriture. Le fichier HTML se consulte hors ligne sans autre fichier.</div>
+<h3 id="fr-desktop">02 / Interface graphique</h3>
+<h4>Convert audio — Convertir des fichiers audio</h4>
 <ol>
-<li>Placez <code>odconv.exe</code> dans le dossier de votre choix, sous Windows x64. La version autonome ne demande ni installation de .NET ni Python global.</li>
-<li>Double-cliquez sur l’EXE ou lancez <code>odconv</code> dans un terminal depuis son dossier. Dans PowerShell, utilisez <code>.\odconv.exe</code> si le programme n’est pas dans le PATH.</li>
-<li>Choisissez <strong>Process audio / video</strong> pour l’extraction, la séparation ou la transcription, ou <strong>Convert audio (classic)</strong> pour la conversion audio guidée.</li>
+<li>Choisissez <strong>Single file</strong>, <strong>Multiple files</strong> ou <strong>Folder</strong>. Utilisez le sélecteur ou saisissez les chemins directement. Pour plusieurs fichiers, indiquez un chemin par ligne. Pour un dossier, utilisez un motif tel que <code>*.wav</code> et cochez <strong>Include subfolders</strong> pour inclure les sous-dossiers.</li>
+<li>Choisissez le format et ouvrez <strong>Advanced encoding</strong> pour régler, selon le format, le débit ou la qualité, la fréquence, les canaux, le mono, la profondeur PCM ou la compression FLAC. Laissez la destination vide pour écrire à côté de chaque source.</li>
+<li>Sélectionnez <strong>Preview command</strong> pour afficher les chemins et les commandes FFmpeg. Choisissez <strong>Convert</strong> pour vérifier le récapitulatif et lancer la conversion. Pour remplacer des fichiers existants, cochez <strong>Allow replacement after confirmation</strong> et confirmez les destinations affichées.</li>
 </ol>
-<p>Les exemples utilisent <code>odconv</code>. Entourez de guillemets les chemins contenant des espaces. Glisser un fichier audio sur l’EXE, ou lancer <code>odconv "musique.wav"</code>, ouvre directement la conversion classique.</p>
-<div class="note"><strong>Une aide toujours disponible.</strong> L’entrée <strong>User guide / Guide utilisateur</strong> extrait <code>odconv-user-guide.html</code> à côté de l’EXE exécuté et ouvre le navigateur par défaut. Le fichier est actualisé si le contenu embarqué change. Le dossier de l’EXE doit être accessible en écriture. Le guide fonctionne sans réseau, JavaScript, police externe ni fichier annexe.</div>
-<h3 id="fr-menus">02 / Menus interactifs</h3>
+<h4>Process audio / video — Traiter l’audio d’un fichier</h4>
+<ol>
+<li>Choisissez une source, puis <strong>Analyze source</strong>. Vérifiez la piste dans <strong>Audio track</strong>. Si le média contient plusieurs pistes, choisissez à l’aide de l’index du flux, de la langue et du titre.</li>
+<li>Choisissez <strong>Extract soundtrack</strong>, <strong>Separate vocals and background</strong>, <strong>Transcribe</strong> ou <strong>Separate and transcribe</strong>. Sélectionnez les exports. Pour la transcription, conservez <strong>Auto</strong> ou saisissez le code de langue source à deux lettres. Les actions indisponibles indiquent les modules requis.</li>
+<li>Vérifiez le dossier d’export, le préfixe et les chemins de sortie. Les exports audio utilisent WAV par défaut. Choisissez <strong>Review and process</strong> et confirmez. Utilisez <strong>Cancel</strong> pour interrompre une opération. Ouvrez <strong>Results and warnings</strong> pour consulter les fichiers terminés, les fichiers manquants et les messages. Sélectionnez un fichier terminé pour copier son chemin, l’ouvrir ou l’afficher dans son dossier.</li>
+</ol>
+<h4>Inspect media — Examiner un média</h4>
+<p>Choisissez une source et cliquez sur <strong>Analyze source</strong> pour voir le format, les pistes, les durées, les décalages et les avertissements. <strong>View raw JSON</strong> et <strong>Copy JSON</strong> donnent accès à la sortie de FFprobe. L’inspection fonctionne aussi sur une vidéo muette.</p>
+<h4>Optional modules et Help</h4>
+<p>Ouvrez <strong>Optional modules</strong> pour actualiser l’état d’un module, le vérifier hors ligne ou gérer son installation. Consultez la section <a href="#fr-modules">Modules facultatifs</a> pour les détails. Le menu <strong>Help</strong> présente aussi les formats pris en charge, la version de l’application et le lien de soutien.</p>
+<h3 id="fr-menus">03 / Menus interactifs de la console</h3>
 <p>L’interface de l’application reste en anglais. Utilisez <kbd>↑</kbd> / <kbd>↓</kbd> pour naviguer, <kbd>Entrée</kbd> pour valider et <kbd>Espace</kbd> pour cocher les exports. Les invites affichent leurs valeurs par défaut. Choisissez <strong>Back</strong> pour revenir, ou laissez le chemin source vide. <kbd>Ctrl</kbd> + <kbd>C</kbd> annule la session.</p>
 <h4>Process audio / video — Traitement audio et vidéo</h4>
 <ol>
@@ -661,8 +693,8 @@ odconv process "clip.mp4" --action separate-transcribe --language fr --output-di
 <p>Choisissez la source, le format cible, le débit ou la qualité, le passage éventuel en mono, la fréquence et le fichier de sortie. Validez le récapitulatif pour lancer la conversion. Vous pouvez ensuite convertir un autre fichier. Pour sélectionner explicitement une piste dans une vidéo, utilisez <strong>Process audio / video</strong>.</p>
 <h4>Buy me a coffee — Soutenir le projet</h4>
 <p>Si OD.Converter vous est utile, vous pouvez soutenir son développement. Ouvrez <strong>Buy me a coffee</strong> dans le menu principal, puis choisissez <strong>Open Buy Me a Coffee</strong> pour ouvrir <a href="https://buymeacoffee.com/knhsynths">la page d’Olivier Dahan / KNHSynths sur Buy Me a Coffee</a> dans votre navigateur par défaut, ou <strong>Back</strong> pour revenir. Il s’agit de la même page de soutien que dans HarmoTools. Les contributions de tout montant sont facultatives et appréciées. La consultation de cette page nécessite une connexion réseau.</p>
-<h3 id="fr-modules">03 / Modules facultatifs</h3>
-<p>Ouvrez <strong>Optional modules</strong>, choisissez <code>separation</code> (Demucs) ou <code>transcription</code> (Whisper), puis une opération. Install, Repair et Uninstall demandent confirmation dans le menu. Les commandes CLI ci-dessous exécutent directement l’opération demandée.</p>
+<h3 id="fr-modules">04 / Modules facultatifs</h3>
+<p>Ouvrez <strong>Optional modules</strong>, choisissez <code>separation</code> (Demucs) ou <code>transcription</code> (Whisper), puis une opération. Les versions graphique et console partagent la même installation. Utilisez <strong>Refresh</strong> dans l’interface graphique après une modification depuis la console. Install, Repair et Uninstall demandent confirmation dans les deux interfaces interactives. Les commandes CLI ci-dessous exécutent directement l’opération demandée.</p>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -709,7 +741,7 @@ odconv modules status transcription
 odconv modules verify separation
 odconv modules repair transcription
 odconv modules uninstall separation</code></pre>
-<h3 id="fr-cli">04 / Référence des commandes</h3>
+<h3 id="fr-cli">05 / Référence des commandes</h3>
 <p>Les commandes CLI ne posent pas de question. Utilisez <code>--overwrite always</code> lorsque le remplacement est souhaité. Chaque commande accepte <code>--help</code>.</p>
 <pre><code>odconv --help
 odconv --version
@@ -775,7 +807,7 @@ odconv process "clip.mp4" --action separate-transcribe --language en --output-di
 </tbody>
 </table></div>
 <p><code>process</code> accepte une seule source à la fois. <code>-o</code>, <code>--dry-run</code>, les lots et les options récursives appartiennent à <code>convert</code>.</p>
-<h3 id="fr-formats">05 / Formats et encodage</h3>
+<h3 id="fr-formats">06 / Formats et encodage</h3>
 <p>Formats de sortie : <strong>WAV, AIFF, FLAC, WavPack (wv), ALAC, MP3, Ogg Vorbis, Opus, AAC, M4A/AAC et WMA</strong>. ALAC utilise l’extension <code>.m4a</code>. Les formats d’entrée dépendent du FFmpeg embarqué. Une source vidéo produit des exports audio ; le programme n’exporte pas de vidéo montée.</p>
 <div class="table-scroll"><table>
 <thead>
@@ -812,12 +844,12 @@ odconv process "clip.mp4" --action separate-transcribe --language en --output-di
 </tbody>
 </table></div>
 <p>Pour le montage et les contrôles temporels, préférez WAV avec une profondeur adaptée. Les formats avec perte réduisent la taille et peuvent ajouter un délai d’encodage. Convertir une source avec perte vers un format sans perte ne restaure pas les détails supprimés.</p>
-<h3 id="fr-files">06 / Fichiers, chronologie et qualité</h3>
+<h3 id="fr-files">07 / Fichiers, chronologie et qualité</h3>
 <p>Les sorties de process sont nommées <code>&lt;préfixe&gt;-original.wav</code>, <code>-vocals.wav</code>, <code>-background.wav</code>, <code>-transcript.txt</code> et <code>-subtitles.srt</code>. L’extension audio dépend du format choisi. Pour deux sources portant le même nom, utilisez des préfixes ou dossiers différents.</p>
 <p>Les sources sont protégées contre le remplacement. Les exports de process sont finalisés individuellement après succès ; en cas d’échec tardif, les fichiers terminés restent disponibles et les fichiers manquants sont signalés. L’annulation nettoie les intermédiaires lorsque cela est possible et signale les échecs de nettoyage.</p>
 <p>L’extraction et la préparation IA conservent la chronologie de présentation, y compris les pistes retardées et les silences ; les longueurs PCM sont mesurées. Une chronologie inconnue ou incohérente est refusée au lieu d’être devinée. Pour un WAV PCM sans horodatage, l’échantillon zéro définit l’origine. Les exports compressés peuvent introduire un délai d’encodage ; le PCM reste la référence de montage.</p>
 <div class="note warning"><strong>Relisez et écoutez les résultats IA.</strong> La séparation peut laisser des artefacts ou retirer des sons utiles. La transcription et les limites des phrases demandent une relecture. TXT/SRT sont globaux, en UTF-8, sans identification des locuteurs ni traduction. La détection automatique peut omettre une langue dans un enregistrement multilingue ; choisissez la langue source connue si possible. Les contrôles Windows vierge et d’autres médias représentatifs restent reportés ; les validations existantes ne garantissent pas toutes les sources.</div>
-<h3 id="fr-help">07 / Dépannage et codes de sortie</h3>
+<h3 id="fr-help">08 / Dépannage et codes de sortie</h3>
 <details><summary>Une action n’est pas disponible</summary>
 <p>Ouvrez Optional modules, consultez l’état et installez ou réparez le module requis. Extraction et conversion classique ne nécessitent aucun module IA. Aucun module n’est téléchargé implicitement.</p>
 </details>
@@ -831,15 +863,15 @@ odconv process "clip.mp4" --action separate-transcribe --language en --output-di
 <p>Placez l’EXE dans un dossier accessible en écriture, puis réessayez. Lancez <code>odconv guide --extract</code> et ouvrez manuellement <code>odconv-user-guide.html</code> à côté de l’EXE. Vérifiez l’association du navigateur par défaut. Le guide figure aussi dans les sources : <code>docs/user-guide.html</code>.</p>
 </details>
 <details><summary>Le traitement échoue ou semble très lent</summary>
-<p>Lisez la dernière erreur et la liste des exports terminés. Vérifiez les modules, la mémoire et l’espace disque, ou essayez une source plus courte. Le traitement IA sur CPU peut être long. En cas d’erreur temporelle, inspectez les métadonnées ; le programme n’invente pas la chronologie. Ctrl+C permet d’annuler.</p>
+<p>Lisez la dernière erreur et la liste des exports terminés. Vérifiez les modules, la mémoire et l’espace disque, ou essayez une source plus courte. Le traitement IA sur CPU peut être long. En cas d’erreur temporelle, inspectez les métadonnées ; le programme n’invente pas la chronologie. Pour annuler, utilisez <strong>Cancel</strong> dans l’interface graphique ou <kbd>Ctrl</kbd> + <kbd>C</kbd> dans la console.</p>
 </details>
-<p><strong>Codes de sortie :</strong> <code>0</code> succès/aide ; <code>1</code> erreur d’arguments, de source ou de sélection ; <code>2</code> outil/module requis indisponible ou vérification d’un module non prêt ; <code>3</code> échec de traitement ou d’opération (dont extraction/ouverture du guide) ; <code>130</code> annulation. Probe conserve le code 1 pour les erreurs d’analyse.</p>
+<p><strong>Codes de sortie de la CLI :</strong> <code>0</code> succès/aide ; <code>1</code> erreur d’arguments, de source ou de sélection ; <code>2</code> outil/module requis indisponible ou vérification d’un module non prêt ; <code>3</code> échec de traitement ou d’opération (dont extraction/ouverture du guide) ; <code>130</code> annulation. Probe conserve le code 1 pour les erreurs d’analyse.</p>
 <p class="back"><a href="#top">↑ Retour au choix de langue</a></p>
 </article>
 </main>
 </div>
 <footer>
-<p>OD.Converter 1.3.2 · © 2026 Olivier Dahan · DonationWare · 2026-11-21</p>
+<p>OD.Converter 1.4.0 · © 2026 Olivier Dahan · DonationWare · 2026-11-21</p>
 <p><a href="https://github.com/odahan/OD.Converter">Source &amp; releases / Sources et versions</a><a href="https://buymeacoffee.com/knhsynths">Support the project / Soutenir le projet</a></p>
 <p>FFmpeg, Demucs, Whisper and their dependencies retain their respective licenses. / FFmpeg, Demucs, Whisper et leurs dépendances conservent leurs licences respectives.</p>
 </footer>

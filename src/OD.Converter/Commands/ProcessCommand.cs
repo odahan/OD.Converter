@@ -17,65 +17,41 @@ public sealed class ProcessCommand(IFfmpegLocator locator, IFileSystem fileSyste
         try
         {
             var request = ParseArguments(args);
-            if (!fileSystem.FileExists(request.InputPath))
-                return ErrorHandler.Fail($"Source file not found: \"{request.InputPath}\".");
-            string executable;
-            try { executable = locator.ResolveFfprobe(request.AudioOptions.FfmpegPath); }
-            catch (Exception ex) { return ErrorHandler.Fail(ex.Message, 2); }
-            var info = await probe.ProbeAsync(request.InputPath, executable, ct);
-            var source = info.Source ?? MediaProbeParser.Parse(info.RawJson);
-            var plan = new ProcessingPlan(request, source, source.SelectAudioTrack(request.AudioStreamIndex));
-            foreach (var kind in request.Exports) AudioExportService.ValidateDestination(request, kind);
-            ConsoleTheme.Section(AnsiConsole.Console, "Audio / video processing");
-            AnsiConsole.MarkupLine($"[cyan1]Selected audio stream {plan.Track.StreamIndex}[/] [grey](audio ordinal {plan.Track.AudioIndex}).[/]");
-            foreach (var warning in source.Timeline.Warnings) ConsoleTheme.Warning(AnsiConsole.Console, warning);
-            string ffmpeg;
-            try { ffmpeg = locator.Resolve(request.AudioOptions.FfmpegPath); }
-            catch (Exception ex) { return ErrorHandler.Fail(ex.Message, 2); }
+            var diagnostics = new ConsoleMediaProgress();
             var converter = new FfmpegConverter(new ConversionOptionsValidator(fileSystem));
-            if (request.Action != ProcessingAction.Extract)
+            using var client = new HttpClient();
+            var manager = new ModuleManager(new ModulePaths(), new ModuleDownloader(client), BuiltInModuleRecipes.Create(), diagnostics);
+            var runner = new ModuleProcessRunner(Console.Write);
+            var service = new ProcessingService(locator, fileSystem, probe, manager,
+                extraction ?? new AudioExtractionService(converter, converter, diagnostics),
+                separation ?? new AudioSeparationService(manager, runner, converter, converter, diagnostics),
+                transcription ?? new AudioTranscriptionService(manager, runner, converter, converter, diagnostics));
+
+            var info = await service.AnalyzeAsync(request.InputPath, request.AudioOptions.FfmpegPath, ct);
+            var plan = ProcessingService.Plan(request, info);
+            var engineStarted = false;
+            var result = await service.ExecuteAsync(plan, ct, selected =>
             {
-                using var client = new HttpClient();
-                var manager = new ModuleManager(new ModulePaths(), new ModuleDownloader(client), BuiltInModuleRecipes.Create());
-                if ((request.Action == ProcessingAction.Separate && separation is null)
-                    || (request.Action != ProcessingAction.Separate && transcription is null))
-                {
-                    var unavailable = await ProcessingAvailability.CheckAsync(request.Action, manager, ct);
-                    if (unavailable is not null) return ErrorHandler.Fail(unavailable, 2);
-                }
-                var processRunner = new ModuleProcessRunner(Console.Write);
-                var result = request.Action == ProcessingAction.Separate
-                    ? await (separation ?? new AudioSeparationService(manager, processRunner, converter, converter))
-                        .SeparateAsync(plan, ffmpeg, ct)
-                    : await (transcription ?? new AudioTranscriptionService(manager, processRunner, converter, converter))
-                        .TranscribeAsync(plan, ffmpeg, ct);
-                foreach (var export in result.Outputs) ConsoleTheme.Success(AnsiConsole.Console, $"Created: {export.Path}");
-                foreach (var warning in result.Warnings) ConsoleTheme.Warning(AnsiConsole.Console, warning);
-                if (result.Outputs.Any(output => output.Kind is ExportKind.Original or ExportKind.Vocals or ExportKind.Background))
-                    PrintCompressedWarning(request);
-                if (result.ExitCode != 0)
-                    foreach (var missing in request.Exports.Except(result.Outputs.Select(output => output.Kind)))
-                        ConsoleTheme.Warning(AnsiConsole.Console, $"Not created: {ProcessingConventions.OutputPath(request, missing)}");
-                if (result.ErrorMessage is not null) return ErrorHandler.Fail(result.ErrorMessage, result.ExitCode);
-                return result.ExitCode;
-            }
-            var service = extraction ?? new AudioExtractionService(converter, converter);
-            var output = await service.ExtractAsync(plan, ffmpeg, ct);
-            ConsoleTheme.Success(AnsiConsole.Console, $"Created: {output}");
-            PrintCompressedWarning(request);
-            return 0;
+                ConsoleTheme.Section(AnsiConsole.Console, "Audio / video processing");
+                AnsiConsole.MarkupLine($"[cyan1]Selected audio stream {selected.Track.StreamIndex}[/] [grey](audio ordinal {selected.Track.AudioIndex}).[/]");
+                foreach (var warning in selected.Source.Timeline.Warnings) ConsoleTheme.Warning(AnsiConsole.Console, warning);
+            }, checkModules: request.Action == ProcessingAction.Separate ? separation is null : transcription is null,
+                executing: () => engineStarted = true);
+
+            foreach (var export in result.Outputs) ConsoleTheme.Success(AnsiConsole.Console, $"Created: {export.Path}");
+            foreach (var warning in result.Warnings) ConsoleTheme.Warning(AnsiConsole.Console, warning);
+            if (ProcessingService.EncoderDelayWarning(request, result.Outputs) is { } encoderWarning)
+                ConsoleTheme.Warning(AnsiConsole.Console, encoderWarning);
+            if (result.ExitCode != 0 && engineStarted && request.Action != ProcessingAction.Extract)
+                foreach (var missing in request.Exports.Except(result.Outputs.Select(output => output.Kind)))
+                    ConsoleTheme.Warning(AnsiConsole.Console, $"Not created: {ProcessingConventions.OutputPath(request, missing)}");
+            return result.ErrorMessage is { } error ? ErrorHandler.Fail(error, result.ExitCode) : result.ExitCode;
         }
         catch (OperationCanceledException) { return 130; }
+        catch (MediaToolException ex) { return ErrorHandler.Fail(ex.Message, 2); }
         catch (ArgumentException ex) { return ErrorHandler.Fail(ex.Message); }
         catch (Exception ex) { return ErrorHandler.Fail($"Source processing failed: {ex.Message}", 3); }
     }
-
-    private static void PrintCompressedWarning(ProcessingRequest request)
-    {
-        if (FormatRegistry.Get(request.AudioOptions.TargetFormat)?.IsLossless == false)
-            ConsoleTheme.Warning(AnsiConsole.Console, "Compressed exports may include encoder delay; PCM is the editing reference.");
-    }
-
     /// <summary>Parses the fixed workflow syntax without starting processes or accessing the network.</summary>
     public static ProcessingRequest ParseArguments(string[] args)
     {
@@ -141,18 +117,16 @@ public sealed class ProcessCommand(IFfmpegLocator locator, IFileSystem fileSyste
             "subtitles" => ExportKind.Subtitles,
             _ => throw new ArgumentException($"Unknown export: {value}.")
         }).ToArray();
-        if (selected.Distinct().Count() != selected.Count || selected.Except(ProcessingConventions.AllowedExports(workflow)).Any())
-            throw new ArgumentException("Exports must be unique and supported by the selected action.");
         var audioOptions = new ConversionOptions
         {
             TargetFormat = format, Bitrate = bitrate, Quality = quality, SampleRate = sampleRate, Channels = channels,
             BitDepth = depth, CompressionLevel = compression, Mono = mono, Overwrite = overwrite, FfmpegPath = ffmpeg
         };
-        new ConversionOptionsValidator(new FileSystem()).Validate(audioOptions);
         prefix ??= Path.GetFileNameWithoutExtension(input);
-        ProcessingConventions.ValidatePrefix(prefix);
-        return new ProcessingRequest(input, workflow, track, directory ?? Path.GetDirectoryName(input) ?? ".", prefix,
+        var request = new ProcessingRequest(input, workflow, track, directory ?? Path.GetDirectoryName(input) ?? ".", prefix,
             selected, language, audioOptions);
+        ProcessingService.ValidateRequest(request);
+        return request;
     }
 
     /// <summary>Prints the fixed syntax and the current implementation boundary.</summary>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ApplicationVersion.props" />
+  <PropertyGroup>
+    <!-- .NET 11 WPF uses mixed-mode assemblies that must be loaded from disk. See dotnet/wpf#11842. -->
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+  </PropertyGroup>
+  <Import Project="../WindowsPublish.props" />
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>odconv-gui</AssemblyName>
+    <RootNamespace>OD.Converter.Gui</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OD.Converter.Core/OD.Converter.Core.csproj" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <Resource Include="../OD.Converter/Assets/odconv.ico" Link="odconv.ico" />
+  </ItemGroup>
+</Project>

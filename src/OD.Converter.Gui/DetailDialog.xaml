@@ -1,0 +1,23 @@
+<local:DarkWindow x:Class="OD.Converter.Gui.DetailDialog"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:local="clr-namespace:OD.Converter.Gui"
+                  Style="{StaticResource AppWindow}" WindowStartupLocation="CenterOwner"
+                  ShowInTaskbar="False" Width="650" Height="420" MinWidth="365" MinHeight="260">
+    <Grid Margin="20" KeyboardNavigation.TabNavigation="Cycle">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="Heading" Style="{StaticResource PageHeading}" TextWrapping="Wrap"/>
+        <TextBox Grid.Row="1" x:Name="Details" Style="{StaticResource Field}" IsReadOnly="True" TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                 AutomationProperties.Name="Details" Margin="0,8,0,12"/>
+        <WrapPanel Grid.Row="2" HorizontalAlignment="Right">
+            <Button x:Name="CopyButton" Content="_Copy" Style="{StaticResource Action}" Click="CopyClicked"/>
+            <Button x:Name="AcceptButton" Style="{StaticResource Action}" Click="AcceptClicked"/>
+            <Button x:Name="CancelButton" Content="_Cancel" Style="{StaticResource Action}" IsCancel="True"/>
+        </WrapPanel>
+    </Grid>
+</local:DarkWindow>
