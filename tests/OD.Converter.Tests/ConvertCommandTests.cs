@@ -74,6 +74,50 @@ public sealed class ConvertCommandTests
         Assert.Equal(1, exit);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RunAsync_KeepsOutputUnderRequestedDirectory(bool sourceOutsideWorkingDirectory)
+    {
+        var workingDirectory = Environment.CurrentDirectory;
+        var sourceRoot = sourceOutsideWorkingDirectory ? Path.GetFullPath("..") : workingDirectory;
+        var source = Path.Combine(sourceRoot, "sources", "input.wav");
+        var destination = Path.Combine(workingDirectory, "exports");
+        var expectedOutput = sourceOutsideWorkingDirectory
+            ? Path.Combine(destination, "input.mp3")
+            : Path.Combine(destination, "sources", "input.mp3");
+        _locatorMock.Setup(l => l.Resolve(null, It.IsAny<string>())).Returns("ffmpeg.exe");
+        _builderMock.Setup(b => b.BuildArguments(It.IsAny<ConversionOptions>())).Returns(["-i", source]);
+
+        var exit = await _command.RunAsync([source, "--to", "mp3", "--output-dir", destination, "--dry-run"], default);
+
+        Assert.Equal(0, exit);
+        _builderMock.Verify(b => b.BuildArguments(It.Is<ConversionOptions>(o => o.OutputPath == expectedOutput)), Times.Once);
+        _fsMock.Verify(f => f.CreateDirectory(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RunAsync_SkipsExistingOutputAndProcessesNextInput()
+    {
+        _locatorMock.Setup(l => l.Resolve(null, It.IsAny<string>())).Returns("ffmpeg.exe");
+        _fsMock.SetupSequence(f => f.FileExists("second.mp3")).Returns(false).Returns(true);
+        using var workspace = new AudioWorkspace();
+        var output = Path.Combine(workspace.DirectoryPath, "second.mp3");
+        File.WriteAllText(output, "output");
+        _fsMock.Setup(f => f.GetFileInfo("second.mp3")).Returns(new FileInfo(output));
+        string[] arguments = ["-i", "second.wav", "second.mp3"];
+        _builderMock.Setup(b => b.BuildArguments(It.IsAny<ConversionOptions>())).Returns(arguments.ToList());
+        _runnerMock.Setup(r => r.RunAsync("ffmpeg.exe", It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((0, ""));
+
+        var exit = await _command.RunAsync(["first.wav", "second.wav", "--to", "mp3"], default);
+
+        Assert.Equal(1, exit);
+        _builderMock.Verify(b => b.BuildArguments(It.Is<ConversionOptions>(o => o.InputPath == "first.wav")), Times.Never);
+        _builderMock.Verify(b => b.BuildArguments(It.Is<ConversionOptions>(o => o.InputPath == "second.wav")), Times.Once);
+        _runnerMock.Verify(r => r.RunAsync("ffmpeg.exe", It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     [Fact]
     public async Task RunAsync_DryRun_PrintsCommandAndReturnsZero()
     {

@@ -1,6 +1,6 @@
 # odconv — Audio Converter CLI (.NET 10 win-x64)
 
-**Version 1.3.1** · [English / French user guide](docs/user-guide.html)
+**Version 1.3.2** · [English / French user guide](docs/user-guide.html)
 
 Self-contained Windows x64 executable with embedded FFmpeg 8.1.2. Conversion and
 extraction work without external dependencies. Optional AI processing uses separately

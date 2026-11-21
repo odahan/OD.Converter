@@ -79,16 +79,27 @@ public sealed class ConversionOptionsValidatorTests
         Assert.Contains("must be different", exception.Message);
     }
 
-    [Fact]
-    public void BuildArguments_UsesRequestedWavBitDepth()
+    [Theory]
+    [InlineData("wav", 16, "pcm_s16le")]
+    [InlineData("wav", 24, "pcm_s24le")]
+    [InlineData("wav", 32, "pcm_s32le")]
+    [InlineData("aiff", 16, "pcm_s16le")]
+    [InlineData("aiff", 24, "pcm_s24be")]
+    [InlineData("aiff", 32, "pcm_s32be")]
+    public void BuildArguments_SelectsPcmCodecWithoutChangingTheInput(string format, int bitDepth, string expectedCodec)
     {
-        var options = CreateOptions("wav", bitDepth: 24);
-        var validatorMock = new Mock<IConversionOptionsValidator>();
-        validatorMock.Setup(v => v.Validate(It.IsAny<ConversionOptions>()));
-        var converter = new FfmpegConverter(validatorMock.Object);
+        var options = new ConversionOptions
+        {
+            InputPath = "pcm_s16le",
+            OutputPath = $"output.{format}",
+            TargetFormat = format,
+            BitDepth = bitDepth
+        };
+        var converter = new FfmpegConverter(_validator);
         var arguments = converter.BuildArguments(options);
 
-        Assert.Contains("pcm_s24le", arguments);
+        Assert.Equal(options.InputPath, arguments[arguments.IndexOf("-i") + 1]);
+        Assert.Equal(expectedCodec, arguments[arguments.IndexOf("-c:a") + 1]);
     }
 
     [Theory]

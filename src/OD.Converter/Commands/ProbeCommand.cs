@@ -49,20 +49,15 @@ public class ProbeCommand
         catch (ArgumentException ex) { return ErrorHandler.Fail(ex.Message); }
 
         if (string.IsNullOrWhiteSpace(input))
-        {
-            ErrorHandler.Fail("Source file is required. Usage: odconv probe <file> [--json]");
-            return 1;
-        }
+            return ErrorHandler.Fail("Source file is required. Usage: odconv probe <file> [--json]");
+
         input = input.Trim().Trim('"');
         if (!_fileSystem.FileExists(input))
-        {
-            ErrorHandler.Fail($"Source file not found: \"{input}\".");
-            return 1;
-        }
+            return ErrorHandler.Fail($"Source file not found: \"{input}\".");
 
         string ffprobe;
         try { ffprobe = _ffmpegLocator.ResolveFfprobe(ffmpegOverride); }
-        catch (Exception ex) { ErrorHandler.Fail(ex.Message); return 2; }
+        catch (Exception ex) { return ErrorHandler.Fail(ex.Message, 2); }
 
         try
         {
@@ -109,8 +104,7 @@ public class ProbeCommand
         catch (OperationCanceledException) { return 130; }
         catch (Exception ex)
         {
-            ErrorHandler.Fail($"Unable to read \"{input}\": the file may be corrupt or unsupported ({ex.Message.Split('\n').FirstOrDefault()?.Trim()})");
-            return 1;
+            return ErrorHandler.Fail($"Unable to read \"{input}\": the file may be corrupt or unsupported ({ex.Message.Split('\n').FirstOrDefault()?.Trim()})");
         }
     }
 

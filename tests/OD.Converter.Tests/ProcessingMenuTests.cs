@@ -95,6 +95,25 @@ public sealed class ProcessingMenuTests
     }
 
     [Fact]
+    public async Task ClassicConversion_ReturnsCancellationWhenFfprobeIsCancelled()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var files = new Mock<IFileSystem>();
+        files.Setup(value => value.FileExists("clip.wav")).Returns(true);
+        var probe = new Mock<IFfprobeService>();
+        probe.Setup(value => value.ProbeAsync("clip.wav", It.IsAny<string>(), cancellation.Token)).Returns(() =>
+        {
+            cancellation.Cancel();
+            return Task.FromCanceled<ProbeInfo>(cancellation.Token);
+        });
+        var validator = new ConversionOptionsValidator(files.Object);
+        var converter = new FfmpegConverter(validator);
+        var interactive = new InteractiveConverter(Locator(), converter, probe.Object, files.Object, converter, validator);
+
+        Assert.Equal(130, await interactive.RunAsync("clip.wav", null, cancellation.Token));
+    }
+
+    [Fact]
     public async Task Menu_OptionalModulesAndBackDoNotInstallAnything()
     {
         using var workspace = new AudioWorkspace();

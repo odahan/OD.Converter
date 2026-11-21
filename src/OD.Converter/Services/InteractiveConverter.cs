@@ -67,10 +67,19 @@ public class InteractiveConverter
             ProbeInfo? probe = null;
             try
             {
+                ct.ThrowIfCancellationRequested();
                 var ffprobe = _ffmpegLocator.ResolveFfprobe(ffmpegOverride);
-                probe = await _ffprobeService.TryProbeAsync(inputPath, ffprobe, ct);
+                probe = await _ffprobeService.ProbeAsync(inputPath, ffprobe, ct);
             }
-            catch { }
+            catch (OperationCanceledException)
+            {
+                AnsiConsole.MarkupLine("[yellow]Conversion cancelled.[/]");
+                return 130;
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.MarkupLine($"[yellow]Warning:[/] Unable to read source metadata. {Markup.Escape(ex.Message)}");
+            }
 
             var sourceDescription = probe is not null
                 ? $"{_fileSystem.GetFileName(inputPath)}{Environment.NewLine}{_ffprobeService.FormatProbeHuman(probe)}"
@@ -274,9 +283,7 @@ public class InteractiveConverter
             }
             else
             {
-                // Extract last meaningful error line from FFmpeg stderr
-                var msg = string.IsNullOrWhiteSpace(stderr) ? $"ffmpeg code {code}" : stderr.Split('\n').Last(s => !string.IsNullOrWhiteSpace(s)).Trim();
-                if (msg.Length > 300) msg = msg[..300];
+                var msg = ErrorHandler.FfmpegDetail(stderr, code);
                 ErrorHandler.FailInteractive($"Conversion failed: {msg}");
                 initialInput = inputPath;
                 continue;

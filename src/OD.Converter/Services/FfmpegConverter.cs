@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using OD.Converter.Models;
 
@@ -40,7 +41,15 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
 
         args.Add("-vn"); // disable video
 
-        args.Add("-c:a"); args.Add(fmt.Codec);
+        var codec = (fmt.Key, opts.BitDepth) switch
+        {
+            ("wav", 24) => "pcm_s24le",
+            ("wav", 32) => "pcm_s32le",
+            ("aiff", 24) => "pcm_s24be",
+            ("aiff", 32) => "pcm_s32be",
+            _ => fmt.Codec
+        };
+        args.Add("-c:a"); args.Add(codec);
 
         // Apply format-specific parameters
         if (!fmt.IsLossless)
@@ -84,29 +93,10 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
                     }
             }
         }
-        else
+        else if (fmt.Key == "flac")
         {
-            if (fmt.Key == "flac")
-            {
-                var level = opts.CompressionLevel ?? 5;
-                args.Add("-compression_level"); args.Add(level.ToString());
-            }
-            if (fmt.Key == "wav" || fmt.Key == "aiff")
-            {
-                if (opts.BitDepth.HasValue)
-                {
-                    var codec = opts.BitDepth.Value switch
-                    {
-                        16 => "pcm_s16le",
-                        24 => "pcm_s24le",
-                        32 => "pcm_s32le",
-                        _ => throw new ArgumentOutOfRangeException(nameof(opts.BitDepth))
-                    };
-                    // Replace the codec previously set with the specific PCM variant
-                    var idx = args.IndexOf(fmt.Codec);
-                    if (idx >= 0) args[idx] = codec;
-                }
-            }
+            var level = opts.CompressionLevel ?? 5;
+            args.Add("-compression_level"); args.Add(level.ToString());
         }
 
         // Sample rate
@@ -138,6 +128,7 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
     /// <inheritdoc />
     public async Task<(int ExitCode, string StandardError)> RunAsync(string ffmpegPath, IReadOnlyCollection<string> args, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
         var psi = new ProcessStartInfo(ffmpegPath)
         {
             UseShellExecute = false,
@@ -149,14 +140,30 @@ public class FfmpegConverter : IFfmpegRunner, IArgumentBuilder
 
         using var proc = new Process { StartInfo = psi };
         proc.Start();
-        var stderrTask = proc.StandardError.ReadToEndAsync(ct);
-        var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+        using var stderr = proc.StandardError;
+        using var stdout = proc.StandardOutput;
+        var stderrTask = stderr.ReadToEndAsync(ct);
+        var stdoutTask = stdout.BaseStream.CopyToAsync(Stream.Null, ct);
 
-        using var reg = ct.Register(() => { try { if (!proc.HasExited) proc.Kill(true); } catch { } });
+        try
+        {
+            await proc.WaitForExitAsync(ct);
+            await Task.WhenAll(stderrTask, stdoutTask).WaitAsync(ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            try
+            {
+                if (!proc.HasExited)
+                    proc.Kill(entireProcessTree: true);
+            }
+            catch (Exception ex) when ((ex is InvalidOperationException or Win32Exception) && proc.HasExited)
+            {
+            }
+            await proc.WaitForExitAsync(CancellationToken.None);
+            throw;
+        }
 
-        await proc.WaitForExitAsync(ct);
-        var stderr = await stderrTask;
-        _ = await stdoutTask;
-        return (proc.ExitCode, stderr);
+        return (proc.ExitCode, await stderrTask);
     }
 }

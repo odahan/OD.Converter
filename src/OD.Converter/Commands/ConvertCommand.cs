@@ -83,7 +83,6 @@ public class ConvertCommand
             catch (Exception ex) { return ErrorHandler.Fail(ex.Message, 2); }
 
             int exitCode = 0;
-            var anyFailed = false;
             foreach (var input in inputFiles)
             {
                 var output = singleOutput;
@@ -92,24 +91,10 @@ public class ConvertCommand
                     // Determine output path
                     if (!string.IsNullOrEmpty(parsed.OutputDir))
                     {
-                        // Preserve relative structure
-                        var baseDir = Path.GetDirectoryName(input) ?? ".";
-                        var fileName = Path.GetFileName(input);
                         var relative = Path.GetRelativePath(Environment.CurrentDirectory, input);
-                        // If input is inside current directory, use relative; else use filename only
-                        var dir = Path.GetDirectoryName(relative);
-                        if (!string.IsNullOrEmpty(dir) && !string.IsNullOrEmpty(parsed.OutputDir))
-                        {
-                            var outDir = Path.Combine(parsed.OutputDir, dir);
-                            output = Path.Combine(outDir, Path.GetFileNameWithoutExtension(input) + format.Extension);
-                            // Ensure directory exists
-                            if (!_fileSystem.DirectoryExists(outDir) && !parsed.DryRun)
-                                _fileSystem.CreateDirectory(outDir);
-                        }
-                        else
-                        {
-                            output = Path.Combine(parsed.OutputDir, Path.GetFileNameWithoutExtension(input) + format.Extension);
-                        }
+                        if (Path.IsPathRooted(relative) || relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                            relative = Path.GetFileName(input);
+                        output = Path.Combine(parsed.OutputDir, Path.ChangeExtension(relative, format.Extension));
                     }
                     else
                     {
@@ -135,9 +120,7 @@ public class ConvertCommand
                     _validator.EnsureDifferentPaths(input, output);
                     if (_fileSystem.FileExists(output) && options.Overwrite == "never" && !options.DryRun)
                     {
-                        ErrorHandler.Fail($"Output file already exists: \"{output}\". Use --overwrite always or choose another name.");
-                        anyFailed = true;
-                        exitCode = 1;
+                        exitCode = ErrorHandler.Fail($"Output file already exists: \"{output}\". Use --overwrite always or choose another name.");
                         continue;
                     }
 
@@ -162,9 +145,7 @@ public class ConvertCommand
                     {
                         if (!_fileSystem.FileExists(output))
                         {
-                            ErrorHandler.Fail($"Conversion completed but output file was not found: \"{output}\".", 3);
-                            anyFailed = true;
-                            exitCode = 3;
+                            exitCode = ErrorHandler.Fail($"Conversion completed but output file was not found: \"{output}\".", 3);
                             continue;
                         }
                         var fileInfo = _fileSystem.GetFileInfo(output);
@@ -172,10 +153,8 @@ public class ConvertCommand
                     }
                     else
                     {
-                        var detail = standardError.Split('\n', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim() ?? $"FFmpeg exited with code {procExit}";
-                        ErrorHandler.Fail($"Conversion failed ({detail[..Math.Min(detail.Length, 300)]}). Check the source file or try another format.", 3);
-                        anyFailed = true;
-                        exitCode = 3;
+                        var detail = ErrorHandler.FfmpegDetail(standardError, procExit);
+                        exitCode = ErrorHandler.Fail($"Conversion failed ({detail}). Check the source file or try another format.", 3);
                     }
                 }
                 catch (OperationCanceledException)
@@ -185,19 +164,15 @@ public class ConvertCommand
                 }
                 catch (ArgumentException ex)
                 {
-                    ErrorHandler.Fail(ex.Message);
-                    anyFailed = true;
-                    exitCode = 1;
+                    exitCode = ErrorHandler.Fail(ex.Message);
                 }
                 catch (Exception ex)
                 {
-                    ErrorHandler.Fail($"Unexpected error: {ex.Message}", 3);
-                    anyFailed = true;
-                    exitCode = 3;
+                    exitCode = ErrorHandler.Fail($"Unexpected error: {ex.Message}", 3);
                 }
             }
 
-            return anyFailed ? exitCode : 0;
+            return exitCode;
         }
         catch (OperationCanceledException) { AnsiConsole.MarkupLine("[yellow]Conversion cancelled.[/]"); return 130; }
         catch (ArgumentException ex) { return ErrorHandler.Fail(ex.Message); }

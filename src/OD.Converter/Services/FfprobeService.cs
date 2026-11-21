@@ -52,7 +52,7 @@ public class FfprobeService : IFfprobeService
             RedirectStandardError = true,
             CreateNoWindow = true,
         };
-        psi.ArgumentList.Add("-v"); psi.ArgumentList.Add("quiet");
+        psi.ArgumentList.Add("-v"); psi.ArgumentList.Add("error");
         psi.ArgumentList.Add("-print_format"); psi.ArgumentList.Add("json");
         psi.ArgumentList.Add("-show_format");
         psi.ArgumentList.Add("-show_streams");
